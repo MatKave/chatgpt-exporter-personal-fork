@@ -38,7 +38,7 @@ Batch export, HTML, JSON, screenshots, the other image modes and ChatGPT compati
 3. If you already use the original exporter or a local build of this fork, disable that script to avoid duplicate menus. Refresh ChatGPT.
 4. Select an image mode in the export settings. Reference mode is the default on a new installation; conversation timestamps are opt-in.
 
-Tampermonkey checks this repository's `@updateURL` for updates. GitHub Actions checks upstream daily and publishes a new script only if the existing patches still apply and the build and tests pass. It **does not** rewrite incompatible patches or use AI.
+Tampermonkey checks this repository's `@updateURL` for updates. GitHub Actions checks upstream daily and publishes a new script only if the existing patches still apply and the build and tests pass. It **does not** rewrite incompatible patches.
 
 ## Build
 
