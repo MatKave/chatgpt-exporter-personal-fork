@@ -85,4 +85,10 @@ node --check dist/ChatGPT_Exporter_Personal.user.js
 
 Keep the patch narrowly scoped to behavior not covered by upstream. Before replacing an anchor, inspect the current upstream implementation and update tests for the intended behavior. Review the produced userscript header and test a real image-containing conversation according to [TESTING.md](TESTING.md). Do not add conversation exports or credentials to test fixtures.
 
-This is an independent build of an MIT-licensed upstream project; retain its copyright notice when distributing.
+## Contributing
+
+Issues and patches for the Beijing-time, filename and Markdown reference-image changes are welcome. For bugs present in an unmodified upstream build, report them to [ChatGPT Exporter](https://github.com/pionxzh/chatgpt-exporter).
+
+Keep changes in `patches/` rather than committing upstream source files. Add a regression test where practical, and avoid attaching private conversation exports, session cookies or credentials to bug reports.
+
+The original MIT copyright notice must be retained in distributed builds.
