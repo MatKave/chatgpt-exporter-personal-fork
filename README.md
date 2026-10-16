@@ -1,66 +1,59 @@
 # ChatGPT Exporter Personal
 
-[简体中文](docs/README.zh-CN.md)
+[简体中文](docs/README.zh-CN.md) · [Install userscript](https://raw.githubusercontent.com/MatKave/chatgpt-exporter-personal-fork/main/dist/ChatGPT_Exporter_Personal.user.js)
 
-A small set of enhancements for [ChatGPT Exporter](https://github.com/pionxzh/chatgpt-exporter), built from upstream source. It focuses on readable Markdown archives, consistent Beijing-time timestamps, and Windows-friendly exports.
+A small customization of [ChatGPT Exporter](https://github.com/pionxzh/chatgpt-exporter) for saving conversations as readable Markdown files.
 
-This is an independent community build, not an official release by the upstream maintainer.
+The original exporter can embed images in Markdown, but a Base64 image URL can fill an entire line with thousands of characters. This build moves those URLs into reference definitions at the end of the file. It also shows timestamps in Beijing time and makes exported filenames friendlier to Windows.
 
-## What changes?
+## Example
 
-| | Upstream | This build |
-| --- | --- | --- |
-| Markdown images | Embed data URLs, put images in a ZIP, or omit them | Adds a reference-style mode: short links in the text, Base64 definitions at the end of the same file |
-| Message timestamps | Optional local-time display, to the minute | Beijing time, seconds, and a date when the displayed day changes |
-| Conversation dates | Export metadata and an HTML export-time label | Adds creation time below the Markdown title and replaces the HTML export-time label with creation time |
-| Filenames | Customizable patterns | Beijing-time substitutions and additional Windows filename sanitization |
+Upstream **Embed** mode:
 
-The original image modes, batch export, HTML, JSON, screenshots, citations, and temporary-chat support come from upstream and remain available.
+```md
+![image](data:image/png;base64,iVBORw0KGgo...)
+```
 
-Reference-style images look like this:
+This build's **Reference** mode:
 
 ```md
 ![image][img-001]
 
-[img-001]: data:image/png;base64,...
+[img-001]: data:image/png;base64,iVBORw0KGgo...
 ```
 
-Unlike a separate `assets/` directory, the result is still one Markdown file. The Base64 data is not removed; some Markdown readers do not render `data:` URLs in reference definitions. Choose upstream's **Embed** or **Files** mode if your reader has trouble.
+Both modes keep the image data in a single Markdown file. Reference mode keeps the text easier to edit, and repeated images share one definition; it does not generally reduce file size.
+
+Other changes:
+- **Timestamps:** `Asia/Shanghai`, including seconds and a date when the displayed day changes.
+- **Conversation creation time:** shown under the Markdown title and in place of the HTML export-time label.
+- **Filenames:** Beijing-time date substitutions and sanitization for Windows.
+
+Batch export, HTML, JSON, screenshots, the other image modes and ChatGPT compatibility are inherited from upstream.
 
 ## Install
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/).
-2. Open [ChatGPT_Exporter_Personal.user.js](https://raw.githubusercontent.com/MatKave/chatgpt-exporter-personal-fork/main/dist/ChatGPT_Exporter_Personal.user.js) and install the userscript.
-3. Disable the original ChatGPT Exporter if it is installed, then refresh ChatGPT.
-4. In Exporter settings, choose the image mode and enable conversation timestamps if needed.
+2. **[Install ChatGPT Exporter Personal](https://raw.githubusercontent.com/MatKave/chatgpt-exporter-personal-fork/main/dist/ChatGPT_Exporter_Personal.user.js)**.
+3. If you already use the original exporter or a local build of this fork, disable that script to avoid duplicate menus. Refresh ChatGPT.
+4. Select an image mode in the export settings. Reference mode is the default on a new installation; conversation timestamps are opt-in.
 
-The default image mode for a new installation is **reference-style**. Timestamps remain opt-in.
-
-**Updates:** The public build includes `@updateURL` and `@downloadURL` pointing to this repository's verified userscript. Install the public script once, and Tampermonkey can check for newer versions. Disable any previously installed private or upstream exporter to avoid duplicate menus.
+Tampermonkey checks this repository's `@updateURL` for updates. GitHub Actions checks upstream daily and publishes a new script only if the existing patches still apply and the build and tests pass. It **does not** rewrite incompatible patches or use AI.
 
 ## Build
 
-The repository contains patches, not a copy of the upstream source.
+This repository stores the customizations rather than a full copy of the upstream source.
 
-On Windows, with Git, Python 3 and Node.js 22.16+ installed (including Corepack):
+On Windows, install Git, Python 3 and Node.js 22.16+ with Corepack, then run:
 
 ```bat
 Build.cmd
 ```
 
-The script checks out upstream into `upstream/`, applies the patch, installs dependencies, and runs the build and tests. The output is `dist/ChatGPT_Exporter_Personal.user.js`.
+See [development](docs/DEVELOPMENT.md) for the patch/build process and [testing](docs/TESTING.md) for export checks.
 
-The [CI workflow](.github/workflows/sync-and-build.yml) checks upstream daily and only publishes a build when compilation and tests pass. Incompatible source changes stop the build instead of silently applying a broken patch.
+## Limitations
 
-See [development notes](docs/DEVELOPMENT.md), [test checklist](docs/TESTING.md), and [contribution guidelines](CONTRIBUTING.md).
+Some Markdown renderers do not display reference-style `data:` images; switch back to upstream's **Embed** or **Files** mode if needed. The reference option changes Markdown only. Date separators on a long, virtualized conversation may reflect the messages currently visible in the page.
 
-## Notes
-
-- Displayed times are fixed to `Asia/Shanghai` rather than your device's local time.
-- The image-reference mode affects Markdown only; other export formats retain their upstream behavior.
-- On long conversations, virtualized messages can affect where the first visible full date appears.
-- Keep a copy of your existing scripts and settings before switching builds.
-
-## License
-
-MIT — see [LICENSE](LICENSE). ChatGPT Exporter is developed by [pionxzh](https://github.com/pionxzh); the original copyright notice is retained in the distributed userscript.
+This is an independent build, not an official release from the upstream maintainers. Licensed under [MIT](LICENSE), with the original copyright notice preserved.
