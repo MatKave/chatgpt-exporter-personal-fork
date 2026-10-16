@@ -1,0 +1,164 @@
+name: Validate and sync ChatGPT Exporter Personal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'patches/**'
+      - 'tests/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'Build.cmd'
+      - 'Build.ps1'
+      - '.github/workflows/sync-and-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'patches/**'
+      - 'tests/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'Build.cmd'
+      - 'Build.ps1'
+      - '.github/workflows/sync-and-build.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '24 2 * * *'
+
+# All untrusted builds/tests run with read-only repository permissions.
+# Publishing a validated artifact is isolated in a separate job.
+permissions:
+  contents: read
+
+concurrency:
+  group: exporter-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.fingerprint.outputs.changed }}
+    steps:
+      - name: Checkout personal patch repository (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout official upstream (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: pionxzh/chatgpt-exporter
+          ref: master
+          path: upstream
+          persist-credentials: false
+
+      - name: Calculate source and customization fingerprint
+        id: fingerprint
+        shell: bash
+        env:
+          REPO_IS_PRIVATE: ${{ github.event.repository.private }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          {
+            git -C upstream rev-parse HEAD
+            printf 'repository-private=%s\n' "$REPO_IS_PRIVATE"
+            find patches tests -type f ! -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha256sum
+            sha256sum LICENSE .github/workflows/sync-and-build.yml
+          } | sha256sum | cut -d' ' -f1 > /tmp/personal-build-fingerprint
+          if [[ "$EVENT_NAME" != 'pull_request' ]] && [[ -f dist/.build_source_hash ]] && cmp -s /tmp/personal-build-fingerprint dist/.build_source_hash; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            echo 'Inputs unchanged; nothing to build or publish.'
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.fingerprint.outputs.changed == 'true'
+        with:
+          node-version: '22'
+
+      - name: Enable pnpm via Corepack
+        if: steps.fingerprint.outputs.changed == 'true'
+        run: corepack enable
+
+      - name: Apply fail-closed personal source patches
+        if: steps.fingerprint.outputs.changed == 'true'
+        run: python3 patches/apply.py upstream
+
+      - name: Install, build, typecheck, and run upstream tests
+        if: steps.fingerprint.outputs.changed == 'true'
+        working-directory: upstream
+        run: |
+          corepack pnpm install --frozen-lockfile
+          corepack pnpm build
+          corepack pnpm test
+
+      - name: Check Beijing timestamps and Markdown references
+        if: steps.fingerprint.outputs.changed == 'true'
+        run: node --experimental-strip-types tests/features.test.mjs
+
+      - name: Finalize version and Tampermonkey metadata
+        if: steps.fingerprint.outputs.changed == 'true'
+        shell: bash
+        env:
+          REPO_IS_PRIVATE: ${{ github.event.repository.private }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if [[ "$REPO_IS_PRIVATE" == 'false' ]]; then
+            python3 patches/finalize.py upstream/dist/chatgpt.user.js dist/ChatGPT_Exporter_Personal.user.js --repo "$REPOSITORY" --revision "$RUN_NUMBER"
+          else
+            echo 'Private repository: no inaccessible auto-update URL inserted.'
+            python3 patches/finalize.py upstream/dist/chatgpt.user.js dist/ChatGPT_Exporter_Personal.user.js --revision "$RUN_NUMBER"
+          fi
+          node --check dist/ChatGPT_Exporter_Personal.user.js
+          cp /tmp/personal-build-fingerprint dist/.build_source_hash
+
+      - name: Retain validated build artifact for publication
+        if: steps.fingerprint.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPT_Exporter_Personal
+          path: |
+            dist/ChatGPT_Exporter_Personal.user.js
+            dist/.build_source_hash
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.build.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout personal repository for a verified release
+        uses: actions/checkout@v4
+      - name: Retrieve only the successfully tested artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ChatGPT_Exporter_Personal
+          path: dist
+      - name: Validate release artifact
+        run: |
+          test -s dist/ChatGPT_Exporter_Personal.user.js
+          test -s dist/.build_source_hash
+          head -n 1 dist/ChatGPT_Exporter_Personal.user.js | grep -Fx '// ==UserScript=='
+          if [[ '${{ github.event.repository.private }}' == 'true' ]]; then
+            ! grep -q '^// @updateURL' dist/ChatGPT_Exporter_Personal.user.js
+          else
+            grep -q '^// @updateURL' dist/ChatGPT_Exporter_Personal.user.js
+          fi
+      - name: Publish verified release only if inputs changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dist/ChatGPT_Exporter_Personal.user.js dist/.build_source_hash
+          git diff --cached --quiet && exit 0
+          git commit -m 'build: sync verified upstream exporter'
+          git push
