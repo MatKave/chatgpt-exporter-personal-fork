@@ -1,64 +1,59 @@
 # ChatGPT Exporter Personal
 
-[English](../README.md)
+[English](../README.md) · [安装脚本](https://raw.githubusercontent.com/MatKave/chatgpt-exporter-personal-fork/main/dist/ChatGPT_Exporter_Personal.user.js)
 
-在 [ChatGPT Exporter](https://github.com/pionxzh/chatgpt-exporter) 基础上维护的一组轻量增强，主要面向 Markdown 对话归档、北京时间显示和 Windows 文件名兼容。
+基于 [ChatGPT Exporter](https://github.com/pionxzh/chatgpt-exporter) 的轻量定制，主要为了更方便地保存和整理 Markdown 对话记录。
 
-这是非官方构建，原项目的导出框架、图片下载、批量导出与其他格式仍由上游维护。
+官方已经可以把图片以 Base64 内嵌到 Markdown，但一张图片就可能在正文里占据很长的一行。这个版本将图片数据统一放到文末，正文只保留短引用；另外统一了北京时间显示、创建时间和 Windows 文件名格式。
 
-## 与官方版本的区别
+## 导出效果
 
-| 功能 | 官方版本 | 此版本 |
-| --- | --- | --- |
-| Markdown 图片 | Base64 直接内嵌、ZIP 中的独立图片、忽略图片 | 多一种引用式单文件模式：正文短引用，Base64 定义统一放在文末 |
-| 消息时间 | 可选显示系统本地时间，精确到分钟 | 北京时间，精确到秒，日期变化时显示年月日 |
-| 对话日期 | 可在元数据中使用时间变量，HTML 标题下显示导出时间 | Markdown 标题后增加创建时间，HTML 标题下改为创建时间 |
-| 文件名 | 自定义模板 | 时间变量使用北京时间，进一步清理 Windows 不支持的字符 |
+官方 **Embed** 模式：
 
-官方的 HTML、JSON、截图、引用、临时对话、批量导出等功能均保留。
+```md
+![image](data:image/png;base64,iVBORw0KGgo...)
+```
 
-短引用格式示例：
+新增的 **Reference** 模式：
 
 ```md
 ![image][img-001]
 
-[img-001]: data:image/png;base64,...
+[img-001]: data:image/png;base64,iVBORw0KGgo...
 ```
 
-图片依然保存在**同一个 Markdown 文件**中，不依赖旁边的 `assets/` 目录。它改善正文的可读性，不代表一定压缩文件；部分 Markdown 阅读器不支持这种形式的 `data:` 图片引用，可切换为官方的“内嵌”或“独立图片文件”模式。
+两种格式都把图片保存在**同一个 Markdown 文件**里。短引用的好处是正文更容易阅读和编辑，同一图片重复出现时也能复用定义；并不意味着文件一定更小。
+
+其余定制：
+- **消息时间：** 固定按北京时间（`Asia/Shanghai`）显示，精确到秒，跨天时附带年月日。
+- **对话创建时间：** Markdown 标题下方添加创建时间；HTML 标题下方由导出时间改为创建时间。
+- **文件名：** 日期变量按北京时间生成，进一步兼容 Windows 文件命名规则。
+
+批量导出、HTML、JSON、截图、其他图片模式和 ChatGPT 页面兼容性仍主要由官方项目维护。
 
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)。
-2. 打开 [ChatGPT_Exporter_Personal.user.js](https://raw.githubusercontent.com/MatKave/chatgpt-exporter-personal-fork/main/dist/ChatGPT_Exporter_Personal.user.js) 并安装。
-3. 如已安装官方 ChatGPT Exporter，先将其禁用，避免重复菜单，然后刷新 ChatGPT。
-4. 在脚本设置中选择图片模式；如需时间戳，手动开启“Conversation Timestamp”及相应的导出选项。
+2. 点击 **[安装 ChatGPT Exporter Personal](https://raw.githubusercontent.com/MatKave/chatgpt-exporter-personal-fork/main/dist/ChatGPT_Exporter_Personal.user.js)**。
+3. 如已安装官方版或之前的私有定制版，先禁用旧脚本，以免菜单重复；然后刷新 ChatGPT。
+4. 在导出设置里选择图片模式。新安装默认使用短引用；消息时间戳仍需自行开启。
 
-新安装时图片默认选择短引用模式；**消息时间戳仍默认关闭**。
+公开版带有 `@updateURL`，Tampermonkey 会按其更新检查设置获取新版本。GitHub Actions 每天检查官方源码；只有补丁仍兼容且编译、测试通过时，才会发布新脚本。若上游修改导致补丁失效，则保留之前可用的版本，等待人工维护。
 
-**自动更新：** 公开版构建会将 `@updateURL`、`@downloadURL` 指向此公开仓库的已验证脚本。先安装一次公开版，之后由 Tampermonkey 按其更新检查设置获取新版本。请禁用原先的私有构建或官方版本，避免重复菜单。
+## 构建
 
-## 本地构建
+仓库只保存定制补丁，不复制整套官方源码。
 
-Windows 需要 Git、Python 3 和带 Corepack 的 Node.js 22.16+。在仓库根目录运行：
+Windows 需要 Git、Python 3、Node.js 22.16+ 及 Corepack；在项目根目录运行：
 
 ```bat
 Build.cmd
 ```
 
-构建器会在 `upstream/` 拉取官方源码、应用补丁、安装依赖并执行测试；生成文件为 `dist/ChatGPT_Exporter_Personal.user.js`。
-
-[GitHub Actions](../.github/workflows/sync-and-build.yml) 每日检查上游变化，通过编译和测试后才发布新版本；上游代码与补丁不兼容时会中止，不会自动修改不匹配的代码。
-
-实现与维护说明见 [DEVELOPMENT.md](DEVELOPMENT.md)，导出验收项见 [TESTING.md](TESTING.md)，参与维护请阅读 [CONTRIBUTING.md](../CONTRIBUTING.md)。
+源码补丁和构建流程见 [DEVELOPMENT.md](DEVELOPMENT.md)，导出验收项目见 [TESTING.md](TESTING.md)。
 
 ## 已知限制
 
-- 时区固定为北京时间，与设备所在地无关。
-- 短引用模式仅影响 Markdown。
-- 长对话中的消息采用虚拟滚动，当前可见的第一条消息可能被当作日期段的起点。
-- 官方脚本与此构建的设置不一定共用，切换前请保留备份。
+有些 Markdown 阅读器不支持引用式的 `data:` 图片链接，可使用官方的 **Embed** 或 **Files** 模式代替；Reference 只影响 Markdown。长对话使用虚拟滚动，网页时间戳的跨天日期可能取决于当时可见的消息。
 
-## 许可
-
-项目使用 [MIT License](../LICENSE)。原项目作者为 [pionxzh](https://github.com/pionxzh)，用户脚本成品保留其版权与许可证声明。
+本项目为非官方定制，原作者版权声明保留，使用 [MIT License](../LICENSE)。
