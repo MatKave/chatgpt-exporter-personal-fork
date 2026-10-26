@@ -27,6 +27,13 @@ personal=base/'src/personal'
 personal.mkdir(exist_ok=True)
 (personal/'beijing.ts').write_text((root/'patches/beijing.ts').read_text(encoding='utf-8'),encoding='utf-8')
 (personal/'mdReferences.ts').write_text((root/'patches/mdReferences.ts').read_text(encoding='utf-8'),encoding='utf-8')
+(personal/'creation.ts').write_text((root/'patches/creation.ts').read_text(encoding='utf-8'),encoding='utf-8')
+
+# Keep API conversation creation time reliable across numeric, ISO and missing fields.
+edit('src/api.ts', [
+    ("import urlcatImport from 'urlcat'", "import urlcatImport from 'urlcat'\nimport { conversationCreateTime, conversationUpdateTime } from './personal/creation'"),
+    ("const createTime = conversation.create_time\n    const updateTime = conversation.update_time", "const createTime = conversationCreateTime(conversation)\n    const updateTime = conversationUpdateTime(conversation)"),
+])
 
 edit('src/utils/utils.ts', [
 ("export function noop() {}", "import { formatBeijing, formatBeijingFileTime } from '../personal/beijing'\n\nexport function noop() {}"),
@@ -48,8 +55,10 @@ export function timestamp() {
 }""")
 ])
 edit('src/utils/download.ts', [
-("import { dateStr, timestamp, unixTimestampToISOString } from './utils'", "import { dateStr, timestamp } from './utils'\nimport { formatBeijingFileTime } from '../personal/beijing'"),
-("const _createTime = unixTimestampToISOString(createTime)\n    const _updateTime = unixTimestampToISOString(updateTime)", "const _createTime = formatBeijingFileTime(new Date(createTime * 1000))\n    const _updateTime = formatBeijingFileTime(new Date(updateTime * 1000))"),
+("import { dateStr, timestamp, unixTimestampToISOString } from './utils'", "import { dateStr, timestamp } from './utils'\nimport { formatBeijingFileTime } from '../personal/beijing'\nimport { toUnixSeconds } from '../personal/creation'"),
+("const _createTime = unixTimestampToISOString(createTime)\n    const _updateTime = unixTimestampToISOString(updateTime)", "const _createTime = toUnixSeconds(createTime) ? formatBeijingFileTime(new Date(toUnixSeconds(createTime) * 1000)) : 'unknown-time'\n    const _updateTime = toUnixSeconds(updateTime) ? formatBeijingFileTime(new Date(toUnixSeconds(updateTime) * 1000)) : 'unknown-time'"),
+("createTime = Math.floor(Date.now() / 1000),\n    updateTime = Math.floor(Date.now() / 1000),", "createTime = 0,\n    updateTime = 0,"),
+
 ("""const blob = content instanceof Blob ? content : new Blob([content], { type })""", """const blob = content instanceof Blob ? content : new Blob([typeof content === 'string' && /^text\/(?:plain|html|markdown)(?:;|$)/i.test(type) ? '\\uFEFF' : '', content], { type })"""),
 ("""a.download = filename\n    document.body.appendChild(a)\n    a.click()\n    document.body.removeChild(a)\n    setTimeout""", """a.download = sanitize(filename, { replacement: '-' })\n    document.body.appendChild(a)\n    a.click()\n    document.body.removeChild(a)\n    setTimeout"""),
 ("""    return format
@@ -90,10 +99,82 @@ edit('src/exporter/json.ts', [
      """getFileNameWithFormat(`${fileNameFormat}.ooba`, 'json', { title: conversation.title, chatId, createTime: conversation.createTime, updateTime: conversation.updateTime })"""),
 ])
 
+# Use real conversation times for JSON-like single and batch exports.
+edit('src/exporter/json.ts', [
+    ("import JSZip from 'jszip'", "import JSZip from 'jszip'\nimport { conversationCreateTime, conversationUpdateTime } from '../personal/creation'"),
+    ("createTime: rawConversation.create_time,\n            updateTime: rawConversation.update_time,", "createTime: conversationCreateTime(rawConversation),\n            updateTime: conversationUpdateTime(rawConversation),"),
+])
+
+# PNG capture needs the conversation creation time too, not the screenshot time.
+edit('src/exporter/image.ts', [
+    ("import JSZip from 'jszip'", "import JSZip from 'jszip'\nimport { fetchConversation, getCurrentChatId } from '../api'\nimport { conversationCreateTime, conversationUpdateTime } from '../personal/creation'"),
+    ("const chatId = getChatIdFromUrl() || undefined\n    const fileName = getFileNameWithFormat(fileNameFormat, 'png', { chatId })", """const chatId = getChatIdFromUrl() || ''
+    let fileInfo = { chatId, title: document.title, createTime: 0, updateTime: 0 }
+    try {
+        const id = await getCurrentChatId()
+        const conversation = await fetchConversation(id)
+        fileInfo = {
+            chatId: id,
+            title: conversation.title || document.title,
+            createTime: conversationCreateTime(conversation),
+            updateTime: conversationUpdateTime(conversation),
+        }
+    }
+    catch (error) {
+        console.warn('[Exporter] Screenshot metadata unavailable; not substituting export time', error)
+    }
+    const fileName = getFileNameWithFormat(fileNameFormat, 'png', fileInfo)"""),
+    ("downloadFile(getFileNameWithFormat(fileNameFormat, 'zip', { chatId }), 'application/zip', blob)",
+     "downloadFile(getFileNameWithFormat(fileNameFormat, 'zip', fileInfo), 'application/zip', blob)"),
+])
+
 edit('src/ui/SettingDialog.tsx', [
+    ("import sanitize from 'sanitize-filename'", "import sanitize from 'sanitize-filename'\nimport { useEffect, useState } from 'preact/hooks'\nimport { fetchConversation, getCurrentChatId } from '../api'\nimport { conversationCreateTime, conversationUpdateTime } from '../personal/creation'"),
+    ("import type { ImageMode } from './SettingContext'", "import { defaultFormat } from './SettingContext'\nimport type { ImageMode } from './SettingContext'"),
     ("import { timestamp as _timestamp, dateStr, unixTimestampToISOString } from '../utils/utils'", "import { timestamp as _timestamp, dateStr } from '../utils/utils'\nimport { formatBeijingAttribute } from '../personal/beijing'"),
-    ("title={unixTimestampToISOString(createTime)}", "title={createTime ? formatBeijingAttribute(new Date(createTime * 1000)) : ''}"),
-    ("title={unixTimestampToISOString(updateTime)}", "title={updateTime ? formatBeijingAttribute(new Date(updateTime * 1000)) : ''}")
+    ("""    const now = Date.now() / 1000
+    const createTime = now
+    const updateTime = now
+    const preview = getFileNameWithFormat(format, '{ext}', { title, chatId, createTime, updateTime })""", """    // This preview must use the conversation, not the time the settings dialog opened.
+    const [previewData, setPreviewData] = useState<{ id: string, title: string, createTime: number, updateTime: number } | null>(null)
+    const [previewError, setPreviewError] = useState(false)
+    useEffect(() => {
+        if (!open || !getChatIdFromUrl()) {
+            setPreviewData(null)
+            return
+        }
+        let cancelled = false
+        setPreviewData(null)
+        setPreviewError(false)
+        getCurrentChatId()
+            .then(id => fetchConversation(id))
+            .then(conversation => {
+                if (!cancelled) setPreviewData({
+                    id: conversation.id,
+                    title: conversation.title,
+                    createTime: conversationCreateTime(conversation),
+                    updateTime: conversationUpdateTime(conversation),
+                })
+            })
+            .catch(error => {
+                if (!cancelled) {
+                    setPreviewError(true)
+                    console.warn('[Exporter] Failed to fetch filename preview metadata', error)
+                }
+            })
+        return () => { cancelled = true }
+    }, [open, chatId])
+    const createTime = previewData?.createTime ?? 0
+    const updateTime = previewData?.updateTime ?? 0
+    const preview = previewData?.id === chatId
+        ? getFileNameWithFormat(format, '{ext}', {
+                title: previewData.title || title, chatId, createTime, updateTime,
+            })
+        : previewError ? '无法读取对话创建时间' : '请在对话页面查看实际创建时间'"""),
+    ("title={unixTimestampToISOString(createTime)}", "title={createTime ? formatBeijingAttribute(new Date(createTime * 1000)) : '未知'}"),
+    ("title={unixTimestampToISOString(updateTime)}", "title={updateTime ? formatBeijingAttribute(new Date(updateTime * 1000)) : '未知'}"),
+    ("""<input className="ce-input ce-setting-filename" id="filename" value={format} onChange={e => setFormat(e.currentTarget.value)} />""", """<input className="ce-input ce-setting-filename" id="filename" value={format} onChange={e => setFormat(e.currentTarget.value)} />
+                                <button type="button" className="ce-setting-desc" style={{ marginTop: '6px', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setFormat(defaultFormat)}>恢复本版默认命名（对话创建时间）</button>"""),
 ])
 patch('src/ui/SettingDialog.tsx', '<option value="embed">{t(\'Images Embed\')}</option>', '<option value="reference">单文件 Markdown（图片短引用，推荐）</option>\n                                    <option value="embed">{t(\'Images Embed\')}</option>')
 edit('src/exporter/markdown.ts',[
@@ -218,6 +299,16 @@ describe('Personal date and filename compatibility', () => {
             title: 'x', createTime: 1, updateTime: 1,
         })
         expect(name).toBe('1970-01-01_08-00-01--1970-01-01_08-00-01.md')
+    })
+    it('never uses export time for absent conversation timestamps', () => {
+        const name = getFileNameWithFormat('{title}-{create_time}', 'md', { title: 'old' })
+        expect(name).toBe('old-unknown-time.md')
+    })
+    it('reads the actual timestamp from conversation metadata', async () => {
+        const { conversationCreateTime } = await import('../src/personal/creation')
+        const created = conversationCreateTime({ create_time: '2026-03-15T06:54:44Z' })
+        const name = getFileNameWithFormat('{title}-{create_time}', 'md', { title: 'chatgpt exporter', createTime: created })
+        expect(name).toBe('chatgpt_exporter-2026-03-15_14-54-44.md')
     })
 })
 """, encoding='utf-8')
