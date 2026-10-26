@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.38.0.16
+// @version            2.38.0.18
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -12058,7 +12058,9 @@ SOFTWARE.
 		const rawConversation = await fetchConversation(chatId);
 		downloadFile(getFileNameWithFormat(fileNameFormat, "json", {
 			title: rawConversation.title || "ChatGPT Conversation",
-			chatId
+			chatId,
+			createTime: rawConversation.create_time,
+			updateTime: rawConversation.update_time
 		}), "application/json", conversationToJson([rawConversation]));
 		return true;
 	}
@@ -12075,7 +12077,9 @@ SOFTWARE.
 		const conversation = processConversation(await fetchConversation(chatId));
 		downloadFile(getFileNameWithFormat(`${fileNameFormat}.tavern`, "jsonl", {
 			title: conversation.title,
-			chatId
+			chatId,
+			createTime: conversation.createTime,
+			updateTime: conversation.updateTime
 		}), "application/json-lines", convertToTavern(conversation));
 		return true;
 	}
@@ -12120,7 +12124,9 @@ SOFTWARE.
 		const conversation = processConversation(await fetchConversation(chatId));
 		downloadFile(getFileNameWithFormat(`${fileNameFormat}.ooba`, "json", {
 			title: conversation.title,
-			chatId
+			chatId,
+			createTime: conversation.createTime,
+			updateTime: conversation.updateTime
 		}), "application/json", convertToOoba(conversation));
 		return true;
 	}
@@ -13024,7 +13030,7 @@ SOFTWARE.
 			ScriptStorage.set(key, value);
 		}, [key])];
 	}
-	var defaultFormat = "{title}-{update_time}";
+	var defaultFormat = "{title}-{create_time}";
 	var defaultExportAllLimit = 200;
 	var defaultImageMode = "reference";
 	var defaultExportMetaList = [{
@@ -13061,7 +13067,7 @@ SOFTWARE.
 	});
 	var SettingProvider = ({ children }) => {
 		const [storedFormat, setFormat] = useGMStorage(KEY_FILENAME_FORMAT, defaultFormat);
-		const format = storedFormat === "ChatGPT-{title}" ? defaultFormat : storedFormat;
+		const format = storedFormat === "ChatGPT-{title}" || storedFormat === "{title}-{update_time}" ? defaultFormat : storedFormat;
 		const [enableTimestamp, setEnableTimestamp] = useGMStorage(KEY_TIMESTAMP_ENABLED, false);
 		const [timeStamp24H, setTimeStamp24H] = useGMStorage(KEY_TIMESTAMP_24H, false);
 		const [enableTimestampHTML, setEnableTimestampHTML] = useGMStorage(KEY_TIMESTAMP_HTML, false);
