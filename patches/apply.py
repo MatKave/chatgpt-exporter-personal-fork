@@ -300,6 +300,16 @@ describe('Personal date and filename compatibility', () => {
         })
         expect(name).toBe('1970-01-01_08-00-01--1970-01-01_08-00-01.md')
     })
+    it('never uses export time for absent conversation timestamps', () => {
+        const name = getFileNameWithFormat('{title}-{create_time}', 'md', { title: 'old' })
+        expect(name).toBe('old-unknown-time.md')
+    })
+    it('reads the actual timestamp from conversation metadata', async () => {
+        const { conversationCreateTime } = await import('../src/personal/creation')
+        const created = conversationCreateTime({ create_time: '2026-03-15T06:54:44Z' })
+        const name = getFileNameWithFormat('{title}-{create_time}', 'md', { title: 'chatgpt exporter', createTime: created })
+        expect(name).toBe('chatgpt_exporter-2026-03-15_14-54-44.md')
+    })
 })
 """, encoding='utf-8')
 
