@@ -66,6 +66,10 @@ edit('src/exporter/meta.ts', [
     ("update_time: unixTimestampToISOString(updateTime),", "update_time: updateTime ? formatBeijingAttribute(new Date(updateTime * 1000)) : '',")
 ])
 edit('src/ui/SettingContext.tsx',[
+("const defaultFormat = 'ChatGPT-{title}'", "export const defaultFormat = '{title}-{update_time}'"),
+("const [format, setFormat] = useGMStorage(KEY_FILENAME_FORMAT, defaultFormat)", """const [storedFormat, setFormat] = useGMStorage(KEY_FILENAME_FORMAT, defaultFormat)
+    // Only migrate the old upstream default; leave custom filename formats unchanged.
+    const format = storedFormat === 'ChatGPT-{title}' ? defaultFormat : storedFormat"""),
 ("""export type ImageMode = 'embed' | 'omit' | 'files'""", """export type ImageMode = 'embed' | 'omit' | 'files' | 'reference'"""),
 ("""export const defaultImageMode: ImageMode = 'embed'""", """export const defaultImageMode: ImageMode = 'reference'""")
 ])
@@ -168,8 +172,16 @@ edit('tests/image-modes.test.ts', [
 (base/'tests/personal-filetime.test.ts').write_text("""import { describe, expect, it } from 'vitest'
 import { unixTimestampToISOString } from '../src/utils/utils'
 import { getFileNameWithFormat } from '../src/utils/download'
+import { defaultFormat } from '../src/ui/SettingContext'
 
 describe('Personal date and filename compatibility', () => {
+    it('defaults to title and last-update time, not create time', () => {
+        expect(defaultFormat).toBe('{title}-{update_time}')
+        const name = getFileNameWithFormat(defaultFormat, 'md', {
+            title: 'example', createTime: 1, updateTime: 3661,
+        })
+        expect(name).toBe('example-1970-01-01_09-01-01.md')
+    })
     it('preserves standard ISO timestamps used in metadata', () => {
         expect(unixTimestampToISOString(1)).toBe('1970-01-01T00:00:01.000Z')
         expect(unixTimestampToISOString(0)).toBe('')
