@@ -27,7 +27,7 @@ Both modes keep the image data in a single Markdown file. Reference mode keeps t
 Other changes:
 - **Timestamps:** `Asia/Shanghai`, including seconds and a date when the displayed day changes.
 - **Conversation creation time:** shown under the Markdown title and in place of the HTML export-time label.
-- **Filenames:** Beijing-time date substitutions and sanitization for Windows.
+- **Filenames:** Default to `{title}-{update_time}` (conversation last update, Beijing time), with Windows-safe timestamps. Existing custom filename patterns are retained.
 
 Batch export, HTML, JSON, screenshots, the other image modes and ChatGPT compatibility are inherited from upstream.
 
