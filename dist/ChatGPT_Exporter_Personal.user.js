@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.38.0.18
+// @version            2.38.0.21
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -589,6 +589,28 @@ SOFTWARE.
 	}));
 	var import_sentinel_umd = __toESM(require_sentinel_umd(), 1);
 	var import_dist = __toESM(require_dist(), 1);
+	function toUnixSeconds(value) {
+		if (value == null || value === "") return 0;
+		if (typeof value === "number" || /^\d+(?:\.\d+)?$/.test(value.trim())) {
+			const n = Number(value);
+			if (!Number.isFinite(n) || n <= 0) return 0;
+			return n > 1e11 ? n / 1e3 : n;
+		}
+		const millis = Date.parse(value);
+		return Number.isFinite(millis) && millis > 0 ? millis / 1e3 : 0;
+	}
+	function conversationCreateTime(conversation) {
+		const direct = toUnixSeconds(conversation.create_time);
+		if (direct) return direct;
+		const messages = Object.values(conversation.mapping ?? {}).map((node) => node.message).filter((message) => message && (message.author?.role === "user" || message.author?.role === "assistant"));
+		const firstUser = messages.filter((m) => m?.author?.role === "user").map((m) => toUnixSeconds(m?.create_time)).filter(Boolean);
+		if (firstUser.length) return Math.min(...firstUser);
+		const times = messages.map((m) => toUnixSeconds(m?.create_time)).filter(Boolean);
+		return times.length ? Math.min(...times) : 0;
+	}
+	function conversationUpdateTime(conversation) {
+		return toUnixSeconds(conversation.update_time) || conversationCreateTime(conversation);
+	}
 	var API_MAPPING = {
 		"https://chat.openai.com": "https://chat.openai.com/backend-api",
 		"https://chatgpt.com": "https://chatgpt.com/backend-api"
@@ -1142,8 +1164,8 @@ SOFTWARE.
 	}
 	function processConversation(conversation, options) {
 		const title = conversation.title || "ChatGPT Conversation";
-		const createTime = conversation.create_time;
-		const updateTime = conversation.update_time;
+		const createTime = conversationCreateTime(conversation);
+		const updateTime = conversationUpdateTime(conversation);
 		const startNodeId = conversation.current_node || Object.values(conversation.mapping).find((node) => !node.children || node.children.length === 0)?.id;
 		if (!startNodeId) throw new Error("Failed to find start node.");
 		const conversationNodes = extractConversationResult(conversation.mapping, startNodeId);
@@ -2886,10 +2908,10 @@ SOFTWARE.
 		if (projectName) return `chatgpt-export-project-${normalizeProjectName(projectName)}${suffix}.json`;
 		return `chatgpt-export${suffix}.json`;
 	}
-	function getFileNameWithFormat(format, ext, { title = document.title, chatId = "", createTime = Math.floor(Date.now() / 1e3), updateTime = Math.floor(Date.now() / 1e3) } = {}) {
+	function getFileNameWithFormat(format, ext, { title = document.title, chatId = "", createTime = 0, updateTime = 0 } = {}) {
 		const _title = (0, import_sanitize_filename.default)(title).replace(/\s+/g, "_");
-		const _createTime = formatBeijingFileTime(new Date(createTime * 1e3));
-		const _updateTime = formatBeijingFileTime(new Date(updateTime * 1e3));
+		const _createTime = toUnixSeconds(createTime) ? formatBeijingFileTime(new Date(toUnixSeconds(createTime) * 1e3)) : "unknown-time";
+		const _updateTime = toUnixSeconds(updateTime) ? formatBeijingFileTime(new Date(toUnixSeconds(updateTime) * 1e3)) : "unknown-time";
 		return (0, import_sanitize_filename.default)(format.replace("{title}", _title).replace("{date}", dateStr()).replace("{timestamp}", timestamp()).replace("{chat_id}", chatId).replace("{create_time}", _createTime).replace("{update_time}", _updateTime).concat(`.${ext}`), { replacement: "-" });
 	}
 	var CodeRegex = /(```[\s\S]*?(?:```|$)|`[^`\n]+`)/;
@@ -11822,8 +11844,25 @@ SOFTWARE.
 			pngs.push(png);
 		}
 		effect.dispose();
-		const chatId = getChatIdFromUrl() || void 0;
-		const fileName = getFileNameWithFormat(fileNameFormat, "png", { chatId });
+		let fileInfo = {
+			chatId: getChatIdFromUrl() || "",
+			title: document.title,
+			createTime: 0,
+			updateTime: 0
+		};
+		try {
+			const id = await getCurrentChatId();
+			const conversation = await fetchConversation(id);
+			fileInfo = {
+				chatId: id,
+				title: conversation.title || document.title,
+				createTime: conversationCreateTime(conversation),
+				updateTime: conversationUpdateTime(conversation)
+			};
+		} catch (error) {
+			console.warn("[Exporter] Screenshot metadata unavailable; not substituting export time", error);
+		}
+		const fileName = getFileNameWithFormat(fileNameFormat, "png", fileInfo);
 		if (pngs.length === 1) {
 			downloadFile(fileName, "image/png", pngs[0]);
 			return true;
@@ -11838,7 +11877,7 @@ SOFTWARE.
 			type: "blob",
 			compression: "STORE"
 		});
-		downloadFile(getFileNameWithFormat(fileNameFormat, "zip", { chatId }), "application/zip", blob);
+		downloadFile(getFileNameWithFormat(fileNameFormat, "zip", fileInfo), "application/zip", blob);
 		return true;
 	}
 	async function renderPng(screenshotEl, effect, backgroundColor) {
@@ -12147,8 +12186,8 @@ SOFTWARE.
 			let fileName = getFileNameWithFormat(fileNameFormat, "json", {
 				title: rawConversation.title || "ChatGPT Conversation",
 				chatId: rawConversation.id,
-				createTime: rawConversation.create_time,
-				updateTime: rawConversation.update_time
+				createTime: conversationCreateTime(rawConversation),
+				updateTime: conversationUpdateTime(rawConversation)
 			});
 			if (filenameMap.has(fileName)) {
 				const count = filenameMap.get(fileName) ?? 1;
@@ -14288,15 +14327,41 @@ SOFTWARE.
 		const timestamp$1 = timestamp();
 		const title = (0, import_sanitize_filename.default)(_title).replace(/\s+/g, "_");
 		const chatId = getChatIdFromUrl() || "this-is-a-mock-chat-id";
-		const now = Date.now() / 1e3;
-		const createTime = now;
-		const updateTime = now;
-		const preview = getFileNameWithFormat(format, "{ext}", {
-			title,
+		const [previewData, setPreviewData] = h(null);
+		const [previewError, setPreviewError] = h(false);
+		p(() => {
+			if (!open || !getChatIdFromUrl()) {
+				setPreviewData(null);
+				return;
+			}
+			let cancelled = false;
+			setPreviewData(null);
+			setPreviewError(false);
+			getCurrentChatId().then((id) => fetchConversation(id)).then((conversation) => {
+				if (!cancelled) setPreviewData({
+					id: conversation.id,
+					title: conversation.title,
+					createTime: conversationCreateTime(conversation),
+					updateTime: conversationUpdateTime(conversation)
+				});
+			}).catch((error) => {
+				if (!cancelled) {
+					setPreviewError(true);
+					console.warn("[Exporter] Failed to fetch filename preview metadata", error);
+				}
+			});
+			return () => {
+				cancelled = true;
+			};
+		}, [open, chatId]);
+		const createTime = previewData?.createTime ?? 0;
+		const updateTime = previewData?.updateTime ?? 0;
+		const preview = previewData?.id === chatId ? getFileNameWithFormat(format, "{ext}", {
+			title: previewData.title || title,
 			chatId,
 			createTime,
 			updateTime
-		});
+		}) : previewError ? "无法读取对话创建时间" : "请在对话页面查看实际创建时间";
 		const source = `${baseUrl}/${chatId}`;
 		return o(Dialog, {
 			open,
@@ -14361,13 +14426,13 @@ SOFTWARE.
 											" ",
 											o(Variable, {
 												name: "{create_time}",
-												title: createTime ? formatBeijingAttribute(new Date(createTime * 1e3)) : ""
+												title: createTime ? formatBeijingAttribute(new Date(createTime * 1e3)) : "未知"
 											}),
 											",",
 											" ",
 											o(Variable, {
 												name: "{update_time}",
-												title: updateTime ? formatBeijingAttribute(new Date(updateTime * 1e3)) : ""
+												title: updateTime ? formatBeijingAttribute(new Date(updateTime * 1e3)) : "未知"
 											})
 										]
 									}),
@@ -14376,6 +14441,17 @@ SOFTWARE.
 										id: "filename",
 										value: format,
 										onChange: (e) => setFormat(e.currentTarget.value)
+									}),
+									o("button", {
+										type: "button",
+										className: "ce-setting-desc",
+										style: {
+											marginTop: "6px",
+											cursor: "pointer",
+											textDecoration: "underline"
+										},
+										onClick: () => setFormat(defaultFormat),
+										children: "恢复本版默认命名（对话创建时间）"
 									}),
 									o("p", {
 										className: "ce-setting-desc ce-setting-preview-line",
