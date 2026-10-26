@@ -66,14 +66,30 @@ edit('src/exporter/meta.ts', [
     ("update_time: unixTimestampToISOString(updateTime),", "update_time: updateTime ? formatBeijingAttribute(new Date(updateTime * 1000)) : '',")
 ])
 edit('src/ui/SettingContext.tsx',[
-("const defaultFormat = 'ChatGPT-{title}'", "export const defaultFormat = '{title}-{update_time}'"),
+("const defaultFormat = 'ChatGPT-{title}'", "export const defaultFormat = '{title}-{create_time}'"),
 ("const [format, setFormat] = useGMStorage(KEY_FILENAME_FORMAT, defaultFormat)", """const [storedFormat, setFormat] = useGMStorage(KEY_FILENAME_FORMAT, defaultFormat)
-    // Only migrate the old upstream default; leave custom filename formats unchanged.
-    const format = storedFormat === 'ChatGPT-{title}' ? defaultFormat : storedFormat"""),
+    // Migrate previously shipped defaults; leave other custom formats unchanged.
+    const format = (storedFormat === 'ChatGPT-{title}' || storedFormat === '{title}-{update_time}') ? defaultFormat : storedFormat"""),
 ("""export type ImageMode = 'embed' | 'omit' | 'files'""", """export type ImageMode = 'embed' | 'omit' | 'files' | 'reference'"""),
 ("""export const defaultImageMode: ImageMode = 'embed'""", """export const defaultImageMode: ImageMode = 'reference'""")
 ])
 patch('src/utils/imageFiles.ts', "return ScriptStorage.get<ImageMode>(KEY_IMAGE_MODE) ?? 'embed'", "return ScriptStorage.get<ImageMode>(KEY_IMAGE_MODE) ?? 'reference'")
+# Keep the filename's conversation creation time accurate for single JSON-like exports.
+# Upstream previously omitted timestamps, so a filename token fell back to download time.
+edit('src/exporter/json.ts', [
+    ("""        title: rawConversation.title || 'ChatGPT Conversation',
+        chatId,
+    })""", """        title: rawConversation.title || 'ChatGPT Conversation',
+        chatId,
+        createTime: rawConversation.create_time,
+        updateTime: rawConversation.update_time,
+    })"""),
+    ("""getFileNameWithFormat(`${fileNameFormat}.tavern`, 'jsonl', { title: conversation.title, chatId })""",
+     """getFileNameWithFormat(`${fileNameFormat}.tavern`, 'jsonl', { title: conversation.title, chatId, createTime: conversation.createTime, updateTime: conversation.updateTime })"""),
+    ("""getFileNameWithFormat(`${fileNameFormat}.ooba`, 'json', { title: conversation.title, chatId })""",
+     """getFileNameWithFormat(`${fileNameFormat}.ooba`, 'json', { title: conversation.title, chatId, createTime: conversation.createTime, updateTime: conversation.updateTime })"""),
+])
+
 edit('src/ui/SettingDialog.tsx', [
     ("import { timestamp as _timestamp, dateStr, unixTimestampToISOString } from '../utils/utils'", "import { timestamp as _timestamp, dateStr } from '../utils/utils'\nimport { formatBeijingAttribute } from '../personal/beijing'"),
     ("title={unixTimestampToISOString(createTime)}", "title={createTime ? formatBeijingAttribute(new Date(createTime * 1000)) : ''}"),
@@ -175,15 +191,23 @@ import { getFileNameWithFormat } from '../src/utils/download'
 import { readFileSync } from 'node:fs'
 
 describe('Personal date and filename compatibility', () => {
-    it('defaults to title and last-update time, not create time', () => {
-        const defaultFormat = '{title}-{update_time}'
+    it('defaults to conversation creation time, not last-update time', () => {
+        const defaultFormat = '{title}-{create_time}'
         const source = readFileSync(new URL('../src/ui/SettingContext.tsx', import.meta.url), 'utf8')
-        expect(source).toContain("export const defaultFormat = '{title}-{update_time}'")
-        expect(source).toContain("storedFormat === 'ChatGPT-{title}' ? defaultFormat : storedFormat")
+        expect(source).toContain("export const defaultFormat = '{title}-{create_time}'")
+        expect(source).toContain("storedFormat === 'ChatGPT-{title}' || storedFormat === '{title}-{update_time}'")
+        const main = readFileSync(new URL('../src/main.tsx', import.meta.url), 'utf8')
+        expect(main).toContain("data-chatgpt-search-message-ids")
+        expect(main).toContain('findCreateTime(await createTimes, ids)')
+        expect(main).not.toContain('conversationNodes[index')
+        const markdown = readFileSync(new URL('../src/exporter/markdown.ts', import.meta.url), 'utf8')
+        const html = readFileSync(new URL('../src/exporter/html.ts', import.meta.url), 'utf8')
+        expect(markdown).toContain('formatTimestampDisplay(date)')
+        expect(html).toContain('formatTimestampDisplay(date)')
         const name = getFileNameWithFormat(defaultFormat, 'md', {
             title: 'example', createTime: 1, updateTime: 3661,
         })
-        expect(name).toBe('example-1970-01-01_09-01-01.md')
+        expect(name).toBe('example-1970-01-01_08-00-01.md')
     })
     it('preserves standard ISO timestamps used in metadata', () => {
         expect(unixTimestampToISOString(1)).toBe('1970-01-01T00:00:01.000Z')
