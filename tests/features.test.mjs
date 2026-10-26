@@ -2,6 +2,24 @@ import assert from 'node:assert/strict';
 import { compactImageReferences } from '../patches/mdReferences.ts';
 import { formatBeijing, dateKey, formatBeijingTime, formatBeijingFileTime, formatBeijingAttribute, getTimestampDisplayFormatter } from '../patches/beijing.ts';
 
+import { conversationCreateTime, conversationUpdateTime, toUnixSeconds } from '../patches/creation.ts';
+
+const storedConversation = {
+    create_time: '2026-03-15T06:54:44Z', // March 15, 14:54:44 Beijing
+    update_time: '2026-10-27T06:54:44Z',
+    mapping: {
+        a: { message: { author: { role: 'user' }, create_time: 1773557684 } },
+    },
+};
+assert.equal(formatBeijingFileTime(new Date(conversationCreateTime(storedConversation) * 1000)), '2026-03-15_14-54-44');
+assert.equal(formatBeijingFileTime(new Date(conversationUpdateTime(storedConversation) * 1000)), '2026-10-27_14-54-44');
+assert.equal(toUnixSeconds('2026-03-15T06:54:44Z'), toUnixSeconds(1773557684000));
+assert.equal(conversationCreateTime({ mapping: {
+    a: { message: { author: { role: 'user' }, create_time: '2026-03-15T06:54:44Z' } },
+    b: { message: { author: { role: 'assistant' }, create_time: '2026-03-15T06:55:00Z' } },
+} }), toUnixSeconds('2026-03-15T06:54:44Z'));
+assert.equal(conversationCreateTime({}), 0); // never quietly substitute today's date
+
 const png='data:image/png;base64,aGVsbG8=';
 const jpeg='data:image/jpeg;base64,YWJjZA==';
 let s=`# title\n\n![题目截图](${png})\n\nanswer\n\n![Again](<${png}>)\n`;
