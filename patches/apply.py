@@ -27,6 +27,13 @@ personal=base/'src/personal'
 personal.mkdir(exist_ok=True)
 (personal/'beijing.ts').write_text((root/'patches/beijing.ts').read_text(encoding='utf-8'),encoding='utf-8')
 (personal/'mdReferences.ts').write_text((root/'patches/mdReferences.ts').read_text(encoding='utf-8'),encoding='utf-8')
+(personal/'creation.ts').write_text((root/'patches/creation.ts').read_text(encoding='utf-8'),encoding='utf-8')
+
+# Keep API conversation creation time reliable across numeric, ISO and missing fields.
+edit('src/api.ts', [
+    ("import urlcatImport from 'urlcat'", "import urlcatImport from 'urlcat'\nimport { conversationCreateTime, conversationUpdateTime } from './personal/creation'"),
+    ("const createTime = conversation.create_time\n    const updateTime = conversation.update_time", "const createTime = conversationCreateTime(conversation)\n    const updateTime = conversationUpdateTime(conversation)"),
+])
 
 edit('src/utils/utils.ts', [
 ("export function noop() {}", "import { formatBeijing, formatBeijingFileTime } from '../personal/beijing'\n\nexport function noop() {}"),
@@ -48,8 +55,10 @@ export function timestamp() {
 }""")
 ])
 edit('src/utils/download.ts', [
-("import { dateStr, timestamp, unixTimestampToISOString } from './utils'", "import { dateStr, timestamp } from './utils'\nimport { formatBeijingFileTime } from '../personal/beijing'"),
-("const _createTime = unixTimestampToISOString(createTime)\n    const _updateTime = unixTimestampToISOString(updateTime)", "const _createTime = formatBeijingFileTime(new Date(createTime * 1000))\n    const _updateTime = formatBeijingFileTime(new Date(updateTime * 1000))"),
+("import { dateStr, timestamp, unixTimestampToISOString } from './utils'", "import { dateStr, timestamp } from './utils'\nimport { formatBeijingFileTime } from '../personal/beijing'\nimport { toUnixSeconds } from '../personal/creation'"),
+("const _createTime = unixTimestampToISOString(createTime)\n    const _updateTime = unixTimestampToISOString(updateTime)", "const _createTime = toUnixSeconds(createTime) ? formatBeijingFileTime(new Date(toUnixSeconds(createTime) * 1000)) : 'unknown-time'\n    const _updateTime = toUnixSeconds(updateTime) ? formatBeijingFileTime(new Date(toUnixSeconds(updateTime) * 1000)) : 'unknown-time'"),
+("createTime = Math.floor(Date.now() / 1000),\n    updateTime = Math.floor(Date.now() / 1000),", "createTime = 0,\n    updateTime = 0,"),
+
 ("""const blob = content instanceof Blob ? content : new Blob([content], { type })""", """const blob = content instanceof Blob ? content : new Blob([typeof content === 'string' && /^text\/(?:plain|html|markdown)(?:;|$)/i.test(type) ? '\\uFEFF' : '', content], { type })"""),
 ("""a.download = filename\n    document.body.appendChild(a)\n    a.click()\n    document.body.removeChild(a)\n    setTimeout""", """a.download = sanitize(filename, { replacement: '-' })\n    document.body.appendChild(a)\n    a.click()\n    document.body.removeChild(a)\n    setTimeout"""),
 ("""    return format
@@ -88,6 +97,35 @@ edit('src/exporter/json.ts', [
      """getFileNameWithFormat(`${fileNameFormat}.tavern`, 'jsonl', { title: conversation.title, chatId, createTime: conversation.createTime, updateTime: conversation.updateTime })"""),
     ("""getFileNameWithFormat(`${fileNameFormat}.ooba`, 'json', { title: conversation.title, chatId })""",
      """getFileNameWithFormat(`${fileNameFormat}.ooba`, 'json', { title: conversation.title, chatId, createTime: conversation.createTime, updateTime: conversation.updateTime })"""),
+])
+
+# Use real conversation times for JSON-like single and batch exports.
+edit('src/exporter/json.ts', [
+    ("import JSZip from 'jszip'", "import JSZip from 'jszip'\nimport { conversationCreateTime, conversationUpdateTime } from '../personal/creation'"),
+    ("createTime: rawConversation.create_time,\n            updateTime: rawConversation.update_time,", "createTime: conversationCreateTime(rawConversation),\n            updateTime: conversationUpdateTime(rawConversation),"),
+])
+
+# PNG capture needs the conversation creation time too, not the screenshot time.
+edit('src/exporter/image.ts', [
+    ("import JSZip from 'jszip'", "import JSZip from 'jszip'\nimport { fetchConversation, getCurrentChatId } from '../api'\nimport { conversationCreateTime, conversationUpdateTime } from '../personal/creation'"),
+    ("const chatId = getChatIdFromUrl() || undefined\n    const fileName = getFileNameWithFormat(fileNameFormat, 'png', { chatId })", """const chatId = getChatIdFromUrl() || ''
+    let fileInfo = { chatId, title: document.title, createTime: 0, updateTime: 0 }
+    try {
+        const id = await getCurrentChatId()
+        const conversation = await fetchConversation(id)
+        fileInfo = {
+            chatId: id,
+            title: conversation.title || document.title,
+            createTime: conversationCreateTime(conversation),
+            updateTime: conversationUpdateTime(conversation),
+        }
+    }
+    catch (error) {
+        console.warn('[Exporter] Screenshot metadata unavailable; not substituting export time', error)
+    }
+    const fileName = getFileNameWithFormat(fileNameFormat, 'png', fileInfo)"""),
+    ("downloadFile(getFileNameWithFormat(fileNameFormat, 'zip', { chatId }), 'application/zip', blob)",
+     "downloadFile(getFileNameWithFormat(fileNameFormat, 'zip', fileInfo), 'application/zip', blob)"),
 ])
 
 edit('src/ui/SettingDialog.tsx', [
