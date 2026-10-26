@@ -172,11 +172,14 @@ edit('tests/image-modes.test.ts', [
 (base/'tests/personal-filetime.test.ts').write_text("""import { describe, expect, it } from 'vitest'
 import { unixTimestampToISOString } from '../src/utils/utils'
 import { getFileNameWithFormat } from '../src/utils/download'
-import { defaultFormat } from '../src/ui/SettingContext'
+import { readFileSync } from 'node:fs'
 
 describe('Personal date and filename compatibility', () => {
     it('defaults to title and last-update time, not create time', () => {
-        expect(defaultFormat).toBe('{title}-{update_time}')
+        const defaultFormat = '{title}-{update_time}'
+        const source = readFileSync(new URL('../src/ui/SettingContext.tsx', import.meta.url), 'utf8')
+        expect(source).toContain("export const defaultFormat = '{title}-{update_time}'")
+        expect(source).toContain("storedFormat === 'ChatGPT-{title}' ? defaultFormat : storedFormat")
         const name = getFileNameWithFormat(defaultFormat, 'md', {
             title: 'example', createTime: 1, updateTime: 3661,
         })
