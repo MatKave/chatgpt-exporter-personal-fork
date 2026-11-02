@@ -9,6 +9,7 @@ This project follows upstream releases through a small source overlay. It does n
 ├── patches/
 │   ├── apply.py           # apply checked source/test replacements to upstream
 │   ├── beijing.ts         # timezone and timestamp formatting
+│   ├── creation.ts        # conversation creation time normalization
 │   ├── mdReferences.ts    # Markdown image reference conversion
 │   └── finalize.py        # userscript metadata and license notice
 ├── tests/
@@ -50,6 +51,8 @@ pionxzh/chatgpt-exporter (master)
 `mdReferences.ts` converts `data:image/*;base64,` image links in Markdown into reference definitions. Existing reference IDs are reserved before allocating `img-001`, `img-002`, etc. Non-data image URLs are left alone. The image fetching and cache behavior is upstream's.
 
 `beijing.ts` formats display timestamps in `Asia/Shanghai`. Metadata uses offset-aware ISO-8601 strings; filename substitutions use colon-free timestamps.
+
+`creation.ts` normalizes conversation timestamps from the API, with a first-message fallback when the conversation-level creation time is missing. Unknown times are not silently replaced by the download time.
 
 ## Continuous integration
 
