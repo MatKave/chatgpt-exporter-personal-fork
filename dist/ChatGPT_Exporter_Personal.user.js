@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.38.2.32
+// @version            2.38.3.33
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -26,7 +26,7 @@
 // @match              https://chatgpt.com/gpts/*
 // @match              https://chatgpt.com/share/*
 // @match              https://chatgpt.com/share/*/continue
-// @require            https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js
+// @require            https://cdn.jsdelivr.net/npm/jszip@3.9.1/dist/jszip.min.js
 // @require            https://cdn.jsdelivr.net/npm/@zumer/snapdom@2.24.10/dist/snapdom.js
 // @grant              GM_deleteValue
 // @grant              GM_getValue
