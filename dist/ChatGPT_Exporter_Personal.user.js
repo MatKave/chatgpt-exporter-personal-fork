@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.38.3.33
+// @version            2.38.3.34
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -1165,7 +1165,7 @@ SOFTWARE.
 	}
 	function shouldSkipMessageInExport(message) {
 		if (!message || !message.content) return true;
-		if (message.recipient !== "all") return true;
+		if (message.recipient != null && message.recipient !== "all") return true;
 		if (message.content.content_type === "thoughts") return true;
 		if (message.content.content_type === "reasoning_recap") return true;
 		if (message.metadata?.is_visually_hidden_from_conversation) return true;
