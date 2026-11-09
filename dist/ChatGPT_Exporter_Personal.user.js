@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.38.3.34
+// @version            2.38.3.37
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -1187,10 +1187,11 @@ SOFTWARE.
 		const updateTime = conversationUpdateTime(conversation);
 		const startNodeId = conversation.current_node || Object.values(conversation.mapping).find((node) => !node.children || node.children.length === 0)?.id;
 		if (!startNodeId) throw new Error("Failed to find start node.");
-		const conversationNodes = extractConversationResult(conversation.mapping, startNodeId);
-		const { model, modelSlug } = extractModel(conversation.mapping, conversationNodes);
+		const mapping = flagOfficialExportPreambles(conversation.mapping, startNodeId);
+		const conversationNodes = extractConversationResult(mapping, startNodeId);
+		const { model, modelSlug } = extractModel(mapping, conversationNodes);
 		const mergedConversationNodes = mergeContinuationNodes(conversationNodes);
-		if (options?.enableThinking) attachThinkingToNodes(conversation.mapping, mergedConversationNodes, startNodeId);
+		if (options?.enableThinking) attachThinkingToNodes(mapping, mergedConversationNodes, startNodeId);
 		return {
 			id: conversation.id,
 			title,
@@ -1200,6 +1201,33 @@ SOFTWARE.
 			updateTime,
 			conversationNodes: mergedConversationNodes
 		};
+	}
+	function flagOfficialExportPreambles(mapping, startNodeId) {
+		let result = mapping;
+		let childMessage;
+		let currentNodeId = startNodeId;
+		while (currentNodeId) {
+			const node = mapping[currentNodeId];
+			if (!node) break;
+			const { message } = node;
+			const childType = childMessage?.content.content_type;
+			if (message && message.recipient == null && message.author.role === "assistant" && message.content.content_type === "text" && (childType === "thoughts" || childType === "reasoning_recap")) {
+				if (result === mapping) result = { ...mapping };
+				result[currentNodeId] = {
+					...node,
+					message: {
+						...message,
+						metadata: {
+							...message.metadata,
+							is_thinking_preamble_message: true
+						}
+					}
+				};
+			}
+			childMessage = message;
+			currentNodeId = node.parent;
+		}
+		return result;
 	}
 	function extractModel(conversationMapping, conversationNodes) {
 		const modelSlug = (conversationNodes.findLast((node) => node.message?.metadata?.model_slug) ?? Object.values(conversationMapping).find((node) => node.message?.metadata?.model_slug))?.message?.metadata?.model_slug ?? "";
@@ -1248,7 +1276,7 @@ SOFTWARE.
 		const result = [];
 		for (const node of nodes) {
 			const prevNode = result[result.length - 1];
-			if (prevNode?.message?.author.role === "assistant" && node.message?.author.role === "assistant" && prevNode.message.recipient === "all" && node.message.recipient === "all" && prevNode.message.content.content_type === "text" && node.message.content.content_type === "text") {
+			if (prevNode?.message?.author.role === "assistant" && node.message?.author.role === "assistant" && prevNode.message.recipient === "all" && node.message.recipient === "all" && prevNode.message.content.content_type === "text" && node.message.content.content_type === "text" && !node.message.metadata?.automation_id) {
 				const separator = prevNode.message.channel !== node.message.channel ? "\n\n" : "";
 				prevNode.message.content.parts[prevNode.message.content.parts.length - 1] += separator + node.message.content.parts[0];
 				prevNode.message.content.parts.push(...node.message.content.parts.slice(1));
@@ -12689,6 +12717,24 @@ SOFTWARE.
 		const headIds = new Set(head.map((c) => c.id));
 		return [...head, ...items.filter((c) => !headIds.has(c.id))];
 	}
+	function collectConversations(files) {
+		const conversations = new Map();
+		for (const data of files) {
+			if (!Array.isArray(data)) continue;
+			for (const item of data) {
+				if (!item || typeof item !== "object" || !item.mapping || typeof item.mapping !== "object") continue;
+				const id = item.id ?? item.conversation_id;
+				if (typeof id !== "string") continue;
+				const existing = conversations.get(id);
+				if (existing && (existing.update_time ?? 0) >= (item.update_time ?? 0)) continue;
+				conversations.set(id, {
+					...item,
+					id
+				});
+			}
+		}
+		return [...conversations.values()];
+	}
 	function mitt_default(n) {
 		return {
 			all: n = n || new Map(),
@@ -13613,21 +13659,25 @@ SOFTWARE.
 		const cancelledRef = _$1(false);
 		const skippedRef = _$1([]);
 		const fetchGenRef = _$1(0);
-		const onUpload = T$1((e) => {
-			const file = e.target?.files?.[0];
-			if (!file) return;
-			const fileReader = new FileReader();
-			fileReader.onload = () => {
-				const data = JSON.parse(fileReader.result);
-				if (!Array.isArray(data)) {
-					alert(t("Invalid File Format"));
-					return;
+		const onUpload = T$1(async (e) => {
+			const input = e.target;
+			const files = Array.from(input.files ?? []).sort((a, b) => a.name.localeCompare(b.name));
+			input.value = "";
+			if (!files.length) return;
+			const conversations = collectConversations(await Promise.all(files.map(async (file) => {
+				try {
+					return JSON.parse(await file.text());
+				} catch {
+					return null;
 				}
-				setSelected([]);
-				setExportSource("Local");
-				setLocalConversations(data);
-			};
-			fileReader.readAsText(file);
+			})));
+			if (!conversations.length) {
+				alert(t("Invalid File Format"));
+				return;
+			}
+			setSelected([]);
+			setExportSource("Local");
+			setLocalConversations(conversations);
 		}, [t]);
 		const startApiBatch = T$1((chunk) => {
 			requestQueue.clear();
@@ -13988,7 +14038,7 @@ SOFTWARE.
 				className: "ce-export-source",
 				children: [
 					t("Export from official export file"),
-					" (conversations.json)\xA0",
+					" (conversations*.json)\xA0",
 					o("div", {
 						className: "ce-hstack",
 						children: [exportSource === "API" && o("button", {
@@ -14014,6 +14064,7 @@ SOFTWARE.
 			o("input", {
 				type: "file",
 				accept: "application/json",
+				multiple: true,
 				hidden: true,
 				ref: fileInputRef,
 				onChange: onUpload
