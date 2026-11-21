@@ -238,6 +238,26 @@ function getMenuContainer() {""")
 ])
 
 # Keep official coverage, adjust assertions to the intentional personal formats.
+# Upstream prompt-heading tests compare complete Markdown documents.
+# Preserve upstream's heading assertions while accounting for our intentional
+# conversation-created-at line, rather than removing that user-facing feature.
+edit('tests/prompt-headings.test.ts', [
+    ("""            '# Chat',
+            '',
+            '#### You:',""", """            '# Chat',
+            '',
+            'Created at 1970-01-01 08:00:01',
+            '',
+            '#### You:',"""),
+    ("""            '# Chat',
+            '',
+            '# How do I export a chat?',""", """            '# Chat',
+            '',
+            'Created at 1970-01-01 08:00:01',
+            '',
+            '# How do I export a chat?',"""),
+])
+
 edit('tests/meta.test.ts', [
     ("create_time: '1970-01-01T00:00:01.000Z',", "create_time: '1970-01-01T08:00:01+08:00',"),
     (r"expect(variables.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}$/)",
