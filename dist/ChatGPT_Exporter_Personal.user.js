@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.39.0.51
+// @version            2.39.0.52
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -11371,6 +11371,13 @@ SOFTWARE.
 			this._isDisposed = true;
 		}
 	};
+	function dropRemoteFontFaces(css) {
+		return css.replace(/@font-face\s*\{[^}]*\}/g, (rule) => {
+			const urls = rule.match(/url\([^)]*\)/g) ?? [];
+			if (urls.length === 0 || /local\(/.test(rule)) return rule;
+			return urls.some((url) => /^url\(\s*["']?(?:data|blob):/.test(url)) ? rule : "";
+		});
+	}
 	var PNG_SIGNATURE = new Uint8Array([
 		137,
 		80,
@@ -11551,6 +11558,12 @@ SOFTWARE.
 					if (!(child instanceof HTMLImageElement)) child.style.height = "auto";
 				});
 			});
+		}
+	};
+	var keepLoadableFontFaces = {
+		name: "chatgpt-exporter-keep-loadable-font-faces",
+		beforeRender(context) {
+			if (context.fontsCSS) context.fontsCSS = dropRemoteFontFaces(context.fontsCSS);
 		}
 	};
 	var CJK_FONT_FAMILY = "chatgpt-exporter-cjk";
@@ -12112,7 +12125,7 @@ SOFTWARE.
 			capture = await (0, _zumer_snapdom.snapdom)(screenshotEl, {
 				embedFonts: true,
 				reconcile: true,
-				plugins: [growUserBubbles],
+				plugins: [growUserBubbles, keepLoadableFontFaces],
 				backgroundColor
 			});
 		} catch (error) {
