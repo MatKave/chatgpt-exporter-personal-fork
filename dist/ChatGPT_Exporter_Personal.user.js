@@ -3,7 +3,7 @@
 // @name:zh-CN               ChatGPT Exporter Personal
 // @name:zh-TW               ChatGPT Exporter Personal
 // @namespace          MatKave/chatgpt-exporter-personal-fork
-// @version            2.39.0.54
+// @version            2.40.0.58
 // @author             Personal Fork (MatKave/chatgpt-exporter-personal-fork)
 // @description        Upstream ChatGPT Exporter with optional Beijing timestamps and single-file Markdown image references
 // @description:zh-CN  基于官方版；保留北京时间、创建时间和 Markdown 单文件图片短引用等定制
@@ -638,6 +638,7 @@ SOFTWARE.
 	var KEY_EXPORT_ALL_LIMIT = "exporter:export_all_limit";
 	var KEY_EXPORTED_UPDATE_TIMES = "exporter:exported_update_times";
 	var KEY_EXPORTED_UPDATE_TIMES_BY_FORMAT = "exporter:exported_update_times_by_format";
+	var KEY_EXPORT_TO_FOLDER = "exporter:export_to_folder";
 	var _GM_deleteValue = (() => typeof GM_deleteValue != "undefined" ? GM_deleteValue : void 0)();
 	var _GM_getValue = (() => typeof GM_getValue != "undefined" ? GM_getValue : void 0)();
 	var _GM_setValue = (() => typeof GM_setValue != "undefined" ? GM_setValue : void 0)();
@@ -10139,6 +10140,9 @@ SOFTWARE.
 		"Select Not Exported": "Select Not Exported",
 		"Select Updated": "Select Updated",
 		"Select Not Exported or Updated": "Select Not Exported or Updated",
+		"Save to Folder": "Save to Folder",
+		"Save to Folder Description": "Write the files straight into a folder you choose, replacing older copies, instead of downloading a ZIP. File names include the chat id, so each conversation keeps one file.",
+		"Export Failed": "Export failed: {{error}}",
 		"Shift Select Hint": "Tip: Shift+click to select a range",
 		Export: "Export",
 		Error: "Error",
@@ -10219,6 +10223,9 @@ SOFTWARE.
 		"Select Not Exported": "Seleccionar conversaciones no exportadas",
 		"Select Updated": "Seleccionar conversaciones actualizadas",
 		"Select Not Exported or Updated": "Seleccionar conversaciones no exportadas o actualizadas",
+		"Save to Folder": "Guardar en una carpeta",
+		"Save to Folder Description": "Escribe los archivos directamente en la carpeta que elijas, reemplazando las copias anteriores, en lugar de descargar un ZIP. Los nombres incluyen el id del chat, así que cada conversación conserva un solo archivo.",
+		"Export Failed": "La exportación falló: {{error}}",
 		"Shift Select Hint": "Consejo: Shift+clic para seleccionar un rango",
 		Export: "Exportar",
 		Error: "Error",
@@ -10299,6 +10306,9 @@ SOFTWARE.
 		"Select Not Exported": "Sélectionner les conversations non exportées",
 		"Select Updated": "Sélectionner les conversations mises à jour",
 		"Select Not Exported or Updated": "Sélectionner les conversations non exportées ou mises à jour",
+		"Save to Folder": "Enregistrer dans un dossier",
+		"Save to Folder Description": "Écrit les fichiers directement dans le dossier choisi, en remplaçant les anciennes copies, au lieu de télécharger un ZIP. Les noms incluent l’id du chat, chaque conversation garde donc un seul fichier.",
+		"Export Failed": "L’export a échoué : {{error}}",
 		"Shift Select Hint": "Astuce : Maj+clic pour sélectionner une plage",
 		Export: "Exporter",
 		Error: "Erreur",
@@ -10379,6 +10389,9 @@ SOFTWARE.
 		"Select Not Exported": "Pilih percakapan yang belum diekspor",
 		"Select Updated": "Pilih percakapan yang diperbarui",
 		"Select Not Exported or Updated": "Pilih percakapan yang belum diekspor atau diperbarui",
+		"Save to Folder": "Simpan ke folder",
+		"Save to Folder Description": "Tulis file langsung ke folder pilihan Anda, menggantikan salinan lama, alih-alih mengunduh ZIP. Nama file menyertakan id chat, jadi setiap percakapan hanya punya satu file.",
+		"Export Failed": "Ekspor gagal: {{error}}",
 		"Shift Select Hint": "Tips: Shift+klik untuk memilih rentang",
 		Export: "Ekspor",
 		Error: "Kesalahan",
@@ -10459,6 +10472,9 @@ SOFTWARE.
 		"Select Not Exported": "未エクスポートの会話を選択",
 		"Select Updated": "更新された会話を選択",
 		"Select Not Exported or Updated": "未エクスポートまたは更新された会話を選択",
+		"Save to Folder": "フォルダに保存",
+		"Save to Folder Description": "ZIP をダウンロードする代わりに、選んだフォルダへ直接ファイルを書き込み、古いコピーを置き換えます。ファイル名にチャット ID が入るため、会話ごとにファイルは 1 つです。",
+		"Export Failed": "エクスポートに失敗しました: {{error}}",
 		"Shift Select Hint": "ヒント: Shift+クリックで範囲選択",
 		Export: "エクスポート",
 		Error: "エラー",
@@ -10539,6 +10555,9 @@ SOFTWARE.
 		"Select Not Exported": "Выбрать неэкспортированные разговоры",
 		"Select Updated": "Выбрать обновлённые разговоры",
 		"Select Not Exported or Updated": "Выбрать неэкспортированные или обновлённые разговоры",
+		"Save to Folder": "Сохранить в папку",
+		"Save to Folder Description": "Записывает файлы прямо в выбранную папку, заменяя старые копии, вместо загрузки ZIP. В имена файлов входит id чата, поэтому у каждого разговора остаётся один файл.",
+		"Export Failed": "Не удалось экспортировать: {{error}}",
 		"Shift Select Hint": "Совет: Shift+клик выбирает диапазон",
 		Export: "Экспорт",
 		Error: "Ошибка",
@@ -10619,6 +10638,9 @@ SOFTWARE.
 		"Select Not Exported": "Dışa aktarılmamış konuşmaları seç",
 		"Select Updated": "Güncellenen konuşmaları seç",
 		"Select Not Exported or Updated": "Dışa aktarılmamış veya güncellenen konuşmaları seç",
+		"Save to Folder": "Klasöre kaydet",
+		"Save to Folder Description": "ZIP indirmek yerine dosyaları seçtiğiniz klasöre doğrudan yazar ve eski kopyaların yerine koyar. Dosya adları sohbet kimliğini içerir, böylece her konuşmanın tek bir dosyası olur.",
+		"Export Failed": "Dışa aktarma başarısız oldu: {{error}}",
 		"Shift Select Hint": "İpucu: Aralık seçmek için Shift+tık",
 		Export: "Dışa Aktar",
 		Error: "Hata",
@@ -10699,6 +10721,9 @@ SOFTWARE.
 		"Select Not Exported": "选择未导出的对话",
 		"Select Updated": "选择有更新的对话",
 		"Select Not Exported or Updated": "选择未导出或有更新的对话",
+		"Save to Folder": "保存到文件夹",
+		"Save to Folder Description": "不下载 ZIP，直接把文件写入你选择的文件夹，并替换旧的副本。文件名会包含对话 ID，每个对话只保留一个文件。",
+		"Export Failed": "导出失败：{{error}}",
 		"Shift Select Hint": "提示：Shift+点击可选择范围",
 		Export: "导出",
 		Error: "错误",
@@ -10779,6 +10804,9 @@ SOFTWARE.
 		"Select Not Exported": "選取未匯出的對話",
 		"Select Updated": "選取有更新的對話",
 		"Select Not Exported or Updated": "選取未匯出或有更新的對話",
+		"Save to Folder": "儲存到資料夾",
+		"Save to Folder Description": "不下載 ZIP，直接把檔案寫入你選擇的資料夾，並取代舊的副本。檔名會包含對話 ID，每個對話只保留一個檔案。",
+		"Export Failed": "匯出失敗：{{error}}",
 		"Shift Select Hint": "提示：Shift+點擊可選取範圍",
 		Export: "匯出",
 		Error: "錯誤",
@@ -11075,6 +11103,7 @@ SOFTWARE.
 	var UrlMarkerRegex = /\uE200url\uE202([^\uE200\uE201\uE202]*)\uE202([^\uE200\uE201\uE202]+)\uE201/gu;
 	var EntityMarkerRegex = /\uE200entity\uE202([^\uE200\uE201]*)\uE201/gu;
 	var ImageGroupMarkerRegex = /\uE200image_group\uE202[^\uE200\uE201]*\uE201/gu;
+	var WritingDirectiveRegex = /^:::writing\{([^}\n]*)\}[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm;
 	function normalizeCitationText(input) {
 		return input.replaceAll(/[\u00A0\u202F\u2007\u2060]/gu, " ").replaceAll(/[\u2010-\u2015\u2212]/gu, "-").replaceAll(/[\uE203\uE204]/gu, "");
 	}
@@ -11095,6 +11124,13 @@ SOFTWARE.
 			output = output.replaceAll(matchedText, () => replacement);
 			if (ref.type === "file" && replacement) fileReplacements.add(replacement);
 		}
+		output = output.replaceAll(WritingDirectiveRegex, (_, attributes, content) => {
+			const subject = /(?:^|\s)subject="([^"]*)"/.exec(attributes)?.[1];
+			return formatWritingBlock({
+				content,
+				subject
+			}, outputType);
+		});
 		for (const replacement of fileReplacements) {
 			const escaped = escapeRegExp(replacement);
 			output = output.replaceAll(new RegExp(`${escaped}(?:\\s*${escaped})+`, "g"), () => replacement);
@@ -11427,6 +11463,61 @@ SOFTWARE.
 		const _updateTime = toUnixSeconds(updateTime) ? formatBeijingFileTime(new Date(toUnixSeconds(updateTime) * 1e3)) : "unknown-time";
 		return (0, import_sanitize_filename.default)(format.replace("{title}", _title).replace("{date}", dateStr()).replace("{timestamp}", timestamp()).replace("{chat_id}", chatId).replace("{create_time}", _createTime).replace("{update_time}", _updateTime).concat(`.${ext}`), { replacement: "-" });
 	}
+	function getDirectoryPicker() {
+		const page = _unsafeWindow;
+		return typeof page?.showDirectoryPicker === "function" ? page.showDirectoryPicker.bind(_unsafeWindow) : void 0;
+	}
+	function canSaveToFolder() {
+		return getDirectoryPicker() !== void 0;
+	}
+	async function pickExportFolder() {
+		const picker = getDirectoryPicker();
+		if (!picker) return null;
+		try {
+			return await picker({
+				id: "chatgpt-exporter",
+				mode: "readwrite"
+			});
+		} catch (error) {
+			if (error instanceof DOMException && error.name === "AbortError") return null;
+			throw error;
+		}
+	}
+	function withChatId(fileNameFormat) {
+		return fileNameFormat.includes("{chat_id}") ? fileNameFormat : `${fileNameFormat}-{chat_id}`;
+	}
+	async function saveZip(zip, zipName, target = { kind: "zip" }) {
+		if (target.kind === "folder") {
+			await writeZipToFolder(zip, target.directory);
+			return;
+		}
+		downloadFile(zipName, "application/zip", await zip.generateAsync({
+			type: "blob",
+			platform: "UNIX",
+			compression: "DEFLATE",
+			compressionOptions: { level: 9 }
+		}));
+	}
+	async function writeZipToFolder(zip, root) {
+		const files = [];
+		zip.forEach((_, file) => {
+			if (!file.dir) files.push(file);
+		});
+		for (const file of files) {
+			const parts = file.name.split("/");
+			const name = parts.pop();
+			let directory = root;
+			for (const part of parts) directory = await directory.getDirectoryHandle(part, { create: true });
+			const writable = await (await directory.getFileHandle(name, { create: true })).createWritable();
+			try {
+				await writable.write(await file.async("blob"));
+				await writable.close();
+			} catch (error) {
+				await writable.abort().catch(() => {});
+				throw error;
+			}
+		}
+	}
 	function standardizeLineBreaks(text) {
 		return text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 	}
@@ -11498,7 +11589,7 @@ SOFTWARE.
 		}), "text/html", standardizeLineBreaks(html));
 		return true;
 	}
-	async function exportAllToHtml(fileNameFormat, apiConversations, metaList, projectName, partIndex, totalParts) {
+	async function exportAllToHtml(fileNameFormat, apiConversations, metaList, projectName, partIndex, totalParts, target) {
 		const userAvatar = await getUserAvatar();
 		const zip = new jszip.default();
 		const filenameMap = new Map();
@@ -11521,16 +11612,10 @@ SOFTWARE.
 			const content = conversationToHtml(conversation, userAvatar, metaList);
 			zip.file(fileName, content);
 		});
-		const blob = await zip.generateAsync({
-			type: "blob",
-			platform: "UNIX",
-			compression: "DEFLATE",
-			compressionOptions: { level: 9 }
-		});
-		downloadFile(buildZipFileName("html", projectName, partIndex != null && totalParts != null ? {
+		await saveZip(zip, buildZipFileName("html", projectName, partIndex != null && totalParts != null ? {
 			part: partIndex,
 			total: totalParts
-		} : void 0), "application/zip", blob);
+		} : void 0), target);
 		return true;
 	}
 	function conversationToHtml(conversation, avatar, metaList) {
@@ -12655,7 +12740,7 @@ SOFTWARE.
 		}), "application/json-lines", convertToTavern(conversation));
 		return true;
 	}
-	async function exportAllToTavern(fileNameFormat, apiConversations, _metaList, projectName, partIndex, totalParts) {
+	async function exportAllToTavern(fileNameFormat, apiConversations, _metaList, projectName, partIndex, totalParts, target) {
 		const zip = new jszip.default();
 		const filenameMap = new Map();
 		apiConversations.map((x) => processConversation(x)).forEach((conversation) => {
@@ -12672,16 +12757,10 @@ SOFTWARE.
 			} else filenameMap.set(fileName, 1);
 			zip.file(fileName, convertToTavern(conversation));
 		});
-		const blob = await zip.generateAsync({
-			type: "blob",
-			platform: "UNIX",
-			compression: "DEFLATE",
-			compressionOptions: { level: 9 }
-		});
-		downloadFile(buildZipFileName("tavern", projectName, partIndex != null && totalParts != null ? {
+		await saveZip(zip, buildZipFileName("tavern", projectName, partIndex != null && totalParts != null ? {
 			part: partIndex,
 			total: totalParts
-		} : void 0), "application/zip", blob);
+		} : void 0), target);
 		return true;
 	}
 	async function exportToOoba(fileNameFormat) {
@@ -12703,7 +12782,7 @@ SOFTWARE.
 		}), "application/json", convertToOoba(conversation));
 		return true;
 	}
-	async function exportAllToOfficialJson(_fileNameFormat, apiConversations, _metaList, projectName, partIndex, totalParts) {
+	async function exportAllToOfficialJson(_fileNameFormat, apiConversations, _metaList, projectName, partIndex, totalParts, _target) {
 		const partInfo = partIndex != null && totalParts != null ? {
 			part: partIndex,
 			total: totalParts
@@ -12712,7 +12791,7 @@ SOFTWARE.
 		downloadFile(buildJsonBatchFileName(projectName, partInfo), "application/json", content);
 		return true;
 	}
-	async function exportAllToJson(fileNameFormat, apiConversations, _metaList, projectName, partIndex, totalParts) {
+	async function exportAllToJson(fileNameFormat, apiConversations, _metaList, projectName, partIndex, totalParts, target) {
 		const zip = new jszip.default();
 		const filenameMap = new Map();
 		const assets = new Map();
@@ -12732,16 +12811,10 @@ SOFTWARE.
 			zip.file(fileName, content);
 		});
 		addImageFilesToZip(zip, assets);
-		const blob = await zip.generateAsync({
-			type: "blob",
-			platform: "UNIX",
-			compression: "DEFLATE",
-			compressionOptions: { level: 9 }
-		});
-		downloadFile(buildZipFileName("json", projectName, partIndex != null && totalParts != null ? {
+		await saveZip(zip, buildZipFileName("json", projectName, partIndex != null && totalParts != null ? {
 			part: partIndex,
 			total: totalParts
-		} : void 0), "application/zip", blob);
+		} : void 0), target);
 		return true;
 	}
 	function conversationToJson(conversation) {
@@ -12827,7 +12900,7 @@ SOFTWARE.
 		downloadFile(fileName.replace(/\.md$/, ".zip"), "application/zip", await generateZip(zip));
 		return true;
 	}
-	async function exportAllToMarkdown(fileNameFormat, apiConversations, metaList, projectName, partIndex, totalParts) {
+	async function exportAllToMarkdown(fileNameFormat, apiConversations, metaList, projectName, partIndex, totalParts, target) {
 		const zip = new jszip.default();
 		const filenameMap = new Map();
 		const enableThinking = ScriptStorage.get("exporter:enable_thinking") ?? false;
@@ -12852,11 +12925,10 @@ SOFTWARE.
 			zip.file(fileName, imageMode === "reference" ? compactImageReferences(content) : content);
 		});
 		addImageFilesToZip(zip, assets);
-		const blob = await generateZip(zip);
-		downloadFile(buildZipFileName("markdown", projectName, partIndex != null && totalParts != null ? {
+		await saveZip(zip, buildZipFileName("markdown", projectName, partIndex != null && totalParts != null ? {
 			part: partIndex,
 			total: totalParts
-		} : void 0), "application/zip", blob);
+		} : void 0), target);
 		return true;
 	}
 	function generateZip(zip) {
@@ -13203,6 +13275,13 @@ SOFTWARE.
 		if (head.length === 0) return items;
 		const headIds = new Set(head.map((c) => c.id));
 		return [...head, ...items.filter((c) => !headIds.has(c.id))];
+	}
+	function useGMStorage(key, initialValue) {
+		const [storedValue, setStoredValue] = h(() => ScriptStorage.get(key) ?? initialValue);
+		return [storedValue, T$1((value) => {
+			setStoredValue(value);
+			ScriptStorage.set(key, value);
+		}, [key])];
 	}
 	function toMs(time) {
 		if (time == null) return 0;
@@ -13679,13 +13758,6 @@ SOFTWARE.
 			})]
 		});
 	};
-	function useGMStorage(key, initialValue) {
-		const [storedValue, setStoredValue] = h(() => ScriptStorage.get(key) ?? initialValue);
-		return [storedValue, T$1((value) => {
-			setStoredValue(value);
-			ScriptStorage.set(key, value);
-		}, [key])];
-	}
 	var defaultFormat = "{title}-{create_time}";
 	var defaultExportAllLimit = 200;
 	var defaultImageMode = "reference";
@@ -14119,23 +14191,28 @@ SOFTWARE.
 		const exportAllOptions = F$1(() => [
 			{
 				label: "Markdown",
-				callback: exportAllToMarkdown
+				callback: exportAllToMarkdown,
+				folder: true
 			},
 			{
 				label: "HTML",
-				callback: exportAllToHtml
+				callback: exportAllToHtml,
+				folder: true
 			},
 			{
 				label: "JSON",
-				callback: exportAllToOfficialJson
+				callback: exportAllToOfficialJson,
+				folder: false
 			},
 			{
 				label: "JSON (ZIP)",
-				callback: exportAllToJson
+				callback: exportAllToJson,
+				folder: true
 			},
 			{
 				label: "TavernAI JSONL (ZIP)",
-				callback: exportAllToTavern
+				callback: exportAllToTavern,
+				folder: true
 			}
 		], []);
 		const fileInputRef = _$1(null);
@@ -14152,6 +14229,10 @@ SOFTWARE.
 		const [processing, setProcessing] = h(false);
 		const [selected, setSelected] = h([]);
 		const [exportType, setExportType] = h(exportAllOptions[0].label);
+		const [saveToFolder, setSaveToFolder] = useGMStorage(KEY_EXPORT_TO_FOLDER, false);
+		const folderAvailable = F$1(() => canSaveToFolder(), []) && !!exportAllOptions.find((o) => o.label === exportType)?.folder;
+		const toFolder = folderAvailable && saveToFolder;
+		const targetRef = _$1({ kind: "zip" });
 		const disabled = processing || selected.length === 0;
 		const [hasMore, setHasMore] = h(false);
 		const [loadingMore, setLoadingMore] = h(false);
@@ -14259,6 +14340,28 @@ SOFTWARE.
 			});
 			return () => off();
 		}, [deleteQueue]);
+		const exportBatch = T$1(async (conversations, partIndex, totalParts) => {
+			const callback = exportAllOptions.find((o) => o.label === exportType)?.callback;
+			if (!callback || conversations.length === 0) return true;
+			const target = targetRef.current;
+			const fileNameFormat = target.kind === "folder" ? withChatId(format) : format;
+			try {
+				await callback(fileNameFormat, conversations, metaList, selectedProject?.display.name, partIndex, totalParts, target);
+			} catch (err) {
+				console.error("Export failed:", err);
+				alert(t("Export Failed", { error: err instanceof Error ? err.message : String(err) }));
+				return false;
+			}
+			markExported(exportType, conversations);
+			return true;
+		}, [
+			exportAllOptions,
+			exportType,
+			format,
+			metaList,
+			selectedProject,
+			t
+		]);
 		p(() => {
 			const off = requestQueue.on("done", async (results) => {
 				if (cancelledRef.current) {
@@ -14270,10 +14373,10 @@ SOFTWARE.
 				const batchIdx = batchIndexRef.current;
 				const totalBatches = totalBatchesRef.current;
 				const partIndex = batchIdx + 1;
-				const callback = exportAllOptions.find((o) => o.label === exportType)?.callback;
-				if (callback && results.length > 0) {
-					await callback(format, results, metaList, selectedProject?.display.name, partIndex, totalBatches);
-					markExported(exportType, results);
+				if (!await exportBatch(results, partIndex, totalBatches)) {
+					setProcessing(false);
+					exportingRef.current = false;
+					return;
 				}
 				skippedRef.current.push(...requestQueue.getSkipped());
 				if (partIndex < totalBatches) {
@@ -14294,12 +14397,8 @@ SOFTWARE.
 			return () => off();
 		}, [
 			requestQueue,
-			exportAllOptions,
-			exportType,
-			format,
-			metaList,
+			exportBatch,
 			startApiBatch,
-			selectedProject,
 			t
 		]);
 		p(() => {
@@ -14366,14 +14465,10 @@ SOFTWARE.
 		]);
 		const exportAllFromLocal = T$1(async () => {
 			if (disabled) return;
-			const results = localConversations.filter((c) => selected.some((s) => s.id === c.id));
-			const callback = exportAllOptions.find((o) => o.label === exportType)?.callback;
-			if (!callback) return;
-			const chunks = chunkArray(results, 100);
+			const chunks = chunkArray(localConversations.filter((c) => selected.some((s) => s.id === c.id)), 100);
 			setProcessing(true);
 			for (let i = 0; i < chunks.length; i++) {
-				await callback(format, chunks[i], metaList, selectedProject?.display.name, i + 1, chunks.length);
-				markExported(exportType, chunks[i]);
+				if (!await exportBatch(chunks[i], i + 1, chunks.length)) break;
 				if (i < chunks.length - 1) await sleep(400);
 			}
 			setProcessing(false);
@@ -14381,18 +14476,35 @@ SOFTWARE.
 			disabled,
 			selected,
 			localConversations,
-			exportAllOptions,
-			exportType,
-			format,
-			metaList,
-			selectedProject
+			exportBatch
 		]);
-		const exportAll = F$1(() => {
-			return exportSource === "API" ? exportAllFromApi : exportAllFromLocal;
+		const exportAll = T$1(async () => {
+			if (disabled) return;
+			targetRef.current = { kind: "zip" };
+			if (toFolder) {
+				let directory;
+				try {
+					directory = await pickExportFolder();
+				} catch (err) {
+					console.error("Folder picker failed:", err);
+					alert(t("Export Failed", { error: err instanceof Error ? err.message : String(err) }));
+					return;
+				}
+				if (!directory) return;
+				targetRef.current = {
+					kind: "folder",
+					directory
+				};
+			}
+			if (exportSource === "API") exportAllFromApi();
+			else await exportAllFromLocal();
 		}, [
+			disabled,
+			toFolder,
 			exportSource,
 			exportAllFromApi,
-			exportAllFromLocal
+			exportAllFromLocal,
+			t
 		]);
 		const deleteAll = T$1(() => {
 			if (disabled) return;
@@ -14658,7 +14770,19 @@ SOFTWARE.
 					]
 				})]
 			}),
-			totalBatches > 1 && !processing && o("p", {
+			folderAvailable && o("div", {
+				className: "ce-folder-option",
+				children: [o(CheckBox, {
+					label: t("Save to Folder"),
+					checked: saveToFolder,
+					disabled: processing,
+					onCheckedChange: setSaveToFolder
+				}), o("p", {
+					className: "ce-folder-option-description",
+					children: t("Save to Folder Description")
+				})]
+			}),
+			totalBatches > 1 && !processing && !toFolder && o("p", {
 				className: "ce-batch-note",
 				children: `${totalBatches} downloads \u00B7 100 conversations each`
 			}),
@@ -15388,7 +15512,7 @@ SOFTWARE.
 	};
 	_css("/*\n * The exporter owns all of its styles. The only things it takes from\n * ChatGPT are the theme variables below, each with a fallback so the UI\n * still works when ChatGPT renames or drops one, and the light/dark switch.\n */\n\nhtml {\n    --ce-text-primary: var(--color-text-primary, #0d0d0d);\n    --ce-text-secondary: var(--color-text-secondary, #5d5d5d);\n    --ce-text-tertiary: var(--color-text-tertiary, #8f8f8f);\n    --ce-border: var(--color-token-border-default, #0000001a);\n    --ce-border-light: var(--color-token-border-light, #0000000d);\n    --ce-hover: var(--color-token-list-hover-background, #0000000d);\n    /* ChatGPT's switches use this, and it follows the accent in Appearance. */\n    --ce-accent: var(--color-chart-blue, #3a83f7);\n    --ce-menu-arrow: var(--sidebar-surface-secondary, #ececec);\n\n    --ce-control-border: #6f6e77;\n    --ce-menu-surface: #ffffff;\n    --ce-menu-border: #0d0d0d26;\n    --ce-dialog-surface: #f3f3f3;\n    --ce-dialog-surface-plain: #ffffff;\n    --ce-card-surface: #ffffff;\n    --ce-input-surface: #fafafa;\n    --ce-track: rgb(229 231 235);\n    --ce-list-header-surface: #f9fafb;\n}\n\n:is(.dark, [data-theme=\"dark\"]) {\n    --ce-text-primary: var(--color-text-primary, #ededed);\n    --ce-text-secondary: var(--color-text-secondary, #cdcdcd);\n    --ce-text-tertiary: var(--color-text-tertiary, #afafaf);\n    --ce-border: var(--color-token-border-default, #ffffff26);\n    --ce-border-light: var(--color-token-border-light, #ffffff0d);\n    --ce-hover: var(--color-token-list-hover-background, #ffffff1a);\n    --ce-menu-arrow: var(--sidebar-surface-secondary, #212121);\n\n    --ce-menu-surface: #2a2a2a;\n    --ce-menu-border: var(--color-token-border-default, #ffffff26);\n    --ce-dialog-surface: #2a2a2a;\n    --ce-dialog-surface-plain: #2a2a2a;\n    --ce-card-surface: rgb(255 255 255 / 5%);\n    --ce-input-surface: #2f2f2f;\n    --ce-track: rgb(255 255 255 / 10%);\n    --ce-list-header-surface: #1f2937;\n}\n\n/*\n * Reset everything under our roots, so ChatGPT's base styles neither help\n * nor break us. :where() keeps it at zero specificity, so any of our own\n * class rules win over it.\n */\n:where(.ce-root, .ce-root *, .ce-root ::before, .ce-root ::after) {\n    box-sizing: border-box;\n    margin: 0;\n    padding: 0;\n    border: 0 solid;\n}\n\n:where(.ce-root :is(button, input, select, textarea)) {\n    font: inherit;\n    color: inherit;\n}\n\n/* A background drops the native look of a range input, so leave it alone. */\n:where(.ce-root :is(button, input:not([type=\"range\"]), select, textarea)) {\n    background-color: transparent;\n}\n\n:where(.ce-root :is(button, select, [role=\"button\"])) {\n    cursor: pointer;\n}\n\n:where(.ce-root :is(ul, ol)) {\n    list-style: none;\n}\n\n:where(.ce-root svg) {\n    display: block;\n    flex-shrink: 0;\n}\n\n:where(.ce-root [hidden]) {\n    display: none;\n}\n\n.ce-icon {\n    width: 1rem;\n    height: 1rem;\n}\n\n.ce-icon-sm {\n    width: 0.75rem;\n    height: 0.75rem;\n}\n\n.ce-icon-md {\n    width: 1.25rem;\n    height: 1.25rem;\n}\n\n.ce-icon-lg {\n    width: 1.5rem;\n    height: 1.5rem;\n}\n\n.ce-hstack {\n    display: flex;\n    align-items: center;\n    gap: 0.5rem;\n}\n\n.ce-mt-2 {\n    margin-top: 0.5rem;\n}\n\n.ce-truncate {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n}\n\n@keyframes ce-fade-in {\n    from {\n        opacity: 0;\n    }\n    to {\n        opacity: 1;\n    }\n}\n\n@keyframes ce-slide-up {\n    from {\n        transform: translateY(100%);\n    }\n    to {\n        transform: translateY(0);\n    }\n}\n\n@keyframes ce-pointer-fade-in {\n    from {\n        opacity: 0;\n        pointer-events: none;\n    }\n    to {\n        opacity: 1;\n        pointer-events: auto;\n    }\n}\n\n@keyframes ce-rotate {\n    from {\n        transform: rotate(0deg);\n    }\n    to {\n        transform: rotate(360deg);\n    }\n}\n\n@keyframes ce-circular-dash {\n    0% {\n        stroke-dasharray: 1px, 200px;\n        stroke-dashoffset: 0;\n    }\n    50% {\n        stroke-dasharray: 100px, 200px;\n        stroke-dashoffset: -15px;\n    }\n    100% {\n        stroke-dasharray: 100px, 200px;\n        stroke-dashoffset: -125px;\n    }\n}\n");
 	_css(".ce-timestamp {\n    display: block;\n    width: 100%;\n    font-size: 0.875rem;\n    line-height: 1.25rem;\n    text-align: right;\n    color: var(--ce-text-tertiary);\n}\n\nspan[data-time-format] {\n    display: none;\n}\n\nbody[data-time-format=\"12\"] span[data-time-format=\"12\"] {\n    display: inline;\n}\n\nbody[data-time-format=\"24\"] span[data-time-format=\"24\"] {\n    display: inline;\n}\n\n.ce-menu-item {\n    display: flex;\n    flex-shrink: 0;\n    align-items: center;\n    gap: 12px;\n    height: 46px;\n    border: 1px solid var(--ce-menu-border);\n    border-radius: 8px;\n    cursor: pointer;\n    transition: background-color 0.2s;\n}\n\n.ce-menu-item[disabled] {\n    filter: brightness(0.5);\n}\n\n.ce-menu-item:not([disabled]):hover {\n    background-color: var(--ce-hover);\n}\n\n.ce-menu-item-loading {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    width: 100%;\n    height: 100%;\n}\n\n.ce-nav-trigger {\n    min-width: 0;\n    border: 0;\n    color: var(--ce-text-primary);\n}\n\n/* Mark the trigger while its menu is open, like ChatGPT's selected rail items. */\n[data-state=\"open\"] > .ce-nav-trigger {\n    color: var(--ce-text-primary);\n    background-color: var(--ce-hover);\n}\n\n.ce-nav-trigger .ce-menu-item-text {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n}\n\n/* Same box as ChatGPT's sidebar rows, so the icon lines up with theirs. */\n.ce-nav-trigger-expanded {\n    margin: 0 0 8px;\n    padding-inline: 10px;\n}\n\n.ce-nav-trigger-collapsed {\n    width: 32px;\n    height: 32px;\n    margin: 0 auto 0.5rem;\n    padding: 0;\n    justify-content: center;\n    gap: 0;\n    border-radius: 8px;\n    color: var(--ce-text-secondary);\n}\n\n.ce-nav-trigger-collapsed .ce-menu-item-text {\n    display: none;\n}\n\n.ce-divider {\n    height: 1px;\n    background-color: var(--ce-border-light);\n}\n\n.ce-card {\n    display: grid;\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n    gap: 4px;\n    padding: 8px;\n    color: var(--ce-text-primary);\n    background-color: var(--ce-menu-surface);\n    border-radius: 1rem;\n    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);\n    transition: opacity 0.2s;\n    animation: ce-fade-in 0.3s;\n}\n\n.ce-card-mobile {\n    animation: ce-slide-up 0.3s;\n}\n\n:is(.dark, [data-theme=\"dark\"]) .ce-card {\n    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);\n}\n\n.ce-card .ce-menu-item {\n    column-gap: 8px;\n    padding-inline: 8px;\n}\n\n.ce-dialog .ce-menu-item {\n    padding-inline-start: 8px;\n}\n\n/* HoverCard sets left/top. ChatGPT's main column carries its own z-index,\n   so raise the card above it. Dialogs sit in the top layer, above this. */\n.ce-card {\n    position: fixed;\n    z-index: 999;\n}\n\n.ce-card-arrow {\n    position: absolute;\n    left: -8px;\n    fill: var(--ce-menu-arrow);\n    stroke: var(--ce-menu-border);\n}\n\n.ce-row-half {\n    grid-column: auto / span 1;\n}\n\n.ce-row-full {\n    grid-column: auto / span 2;\n}\n\n.ce-backdrop {\n    display: block;\n    position: fixed;\n    inset: 0;\n    background-color: rgba(0, 0, 0, 0.5);\n    animation: ce-pointer-fade-in 0.3s;\n}\n");
-	_css("/* Native <dialog>: the backdrop replaces a separate overlay element. */\n.ce-dialog::backdrop {\n    background-color: rgba(0, 0, 0, 0.44);\n    animation: ce-fade-in 150ms cubic-bezier(0.16, 1, 0.3, 1);\n}\n\n.ce-dialog {\n    color: var(--ce-text-primary);\n    background-color: var(--ce-dialog-surface);\n    border-radius: 6px;\n    box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;\n    position: fixed;\n    /* The UA sheet sets inset: 0 and margin: auto on a modal <dialog>. */\n    inset: 50% auto auto 50%;\n    margin: 0;\n    border: 0;\n    transform: translate(-50%, -50%);\n    width: 90vw;\n    max-width: 560px;\n    max-height: 85vh;\n    overflow: hidden;\n    padding: 16px 24px;\n    outline: none;\n    animation: ce-content-show 150ms cubic-bezier(0.16, 1, 0.3, 1);\n    display: flex;\n    flex-direction: column;\n}\n\n/* display: flex above would otherwise show a closed <dialog>. */\n.ce-dialog:not([open]) {\n    display: none;\n}\n\n.ce-dialog-plain {\n    background-color: var(--ce-dialog-surface-plain);\n}\n\n:is(.dark, [data-theme=\"dark\"]) .ce-dialog {\n    border: 1px solid #40414f;\n}\n\n.ce-dialog-title {\n    margin: 0 0 16px 0;\n    font-weight: 500;\n    font-size: 20px;\n    line-height: 1.5;\n    flex-shrink: 0;\n}\n\n.ce-dialog-body {\n    flex: 1;\n    min-height: 0;\n    overflow-y: auto;\n    overflow-x: hidden;\n}\n\n.ce-dialog-footer {\n    display: flex;\n    flex-shrink: 0;\n    justify-content: flex-end;\n    padding-top: 16px;\n}\n\n.ce-button {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 4px;\n    padding: 0 15px;\n    font-size: 15px;\n    line-height: 1;\n    height: 35px;\n}\n.ce-button-strong {\n    font-weight: 700;\n}\n.ce-button-green {\n    background-color: #ddf3e4;\n    color: #18794e;\n}\n.ce-button-green:hover {\n    background-color: #ccebd7;\n}\n.ce-button-red {\n    background-color: #f9d9d9;\n    color: #a71d2a;\n}\n.ce-button-neutral {\n    color: #6f6e77;\n    border: 1px solid #6f6e77;\n    font-size: 13px;\n    height: 26px;\n    padding: 0 8px;\n}\n.ce-button-neutral:hover {\n    background-color: rgba(111, 110, 119, 0.1);\n}\n:is(.dark, [data-theme=\"dark\"]) .ce-button-neutral {\n    color: #a0a0a8;\n    border-color: #a0a0a8;\n}\n:is(.dark, [data-theme=\"dark\"]) .ce-button-neutral:hover {\n    background-color: rgba(160, 160, 168, 0.1);\n}\n.ce-button:disabled,\n.ce-button:disabled:hover {\n    opacity: 0.5;\n    color: #6f6e77;\n    background-color: #e0e0e0;\n    cursor: not-allowed;\n}\n\n.ce-icon-button {\n    border-radius: 100%;\n    height: 25px;\n    width: 25px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    color: var(--ce-text-secondary);\n}\n.ce-icon-button:hover {\n    background-color: var(--ce-hover);\n}\n\n.ce-close-button {\n    position: absolute;\n    top: 10px;\n    right: 10px;\n}\n\n.ce-input {\n    width: 100%;\n    flex: 1;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 4px;\n    padding: 0 10px;\n    font-size: 15px;\n    line-height: 1;\n    color: var(--ce-text-primary);\n    background-color: var(--ce-input-surface);\n    box-shadow: 0 0 0 1px var(--ce-control-border);\n    height: 35px;\n    outline: none;\n}\n\n.ce-select {\n    appearance: none;\n    height: 2rem;\n    padding: 0 2rem 0 0.5rem;\n    width: auto;\n    min-width: 7.5rem;\n    border-radius: 4px;\n    color: var(--ce-text-primary);\n    background-color: var(--ce-input-surface);\n    /* Our own chevron, since appearance: none drops the native one. */\n    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f8f8f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E\");\n    background-repeat: no-repeat;\n    background-position: right 0.5rem center;\n    background-size: 1rem;\n    box-shadow: 0 0 0 1px var(--ce-control-border);\n}\n\n.ce-select:disabled {\n    opacity: 0.6;\n    cursor: not-allowed;\n}\n\n/* ── Export dialog ── */\n\n.ce-export-source {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding-bottom: 12px;\n    margin-bottom: 12px;\n    border-bottom: 1px solid var(--ce-border);\n    color: var(--ce-text-secondary);\n}\n\n.ce-project-select {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    margin-bottom: 12px;\n    color: var(--ce-text-secondary);\n}\n\n.ce-select-search {\n    width: 100%;\n    padding: 8px 16px;\n    border: 1px solid var(--ce-control-border);\n    border-bottom: none;\n    border-radius: 4px 4px 0 0;\n    font-size: 14px;\n    outline: none;\n    flex-shrink: 0;\n}\n.ce-select-search::placeholder {\n    color: var(--ce-text-tertiary);\n}\n\n.ce-select-toolbar {\n    display: flex;\n    align-items: center;\n    /* Minimum breathing room between the select-all label and the right\n       group once the auto margin collapses under pressure */\n    gap: 12px;\n    padding: 12px 16px;\n    border: 1px solid var(--ce-control-border);\n    border-bottom: none;\n    flex-shrink: 0;\n}\n\n/* CJK labels wrap per-character when the row is squeezed — never shrink it */\n.ce-select-toolbar .ce-checkbox {\n    white-space: nowrap;\n    flex-shrink: 0;\n}\n\n.ce-select-toolbar-end {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n    margin-left: auto;\n    min-width: 0;\n}\n\n.ce-toolbar-loading {\n    display: flex;\n    align-items: center;\n    gap: 4px;\n    min-width: 0;\n    overflow: hidden;\n    white-space: nowrap;\n    font-size: 0.875rem;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-toolbar-status {\n    flex-shrink: 0;\n    height: auto;\n    font-size: 0.75rem;\n    padding: 2px 2rem 2px 0.5rem;\n    width: 8.5rem;\n    text-overflow: ellipsis;\n}\n\n.ce-toolbar-hint {\n    min-width: 0;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    font-size: 0.75rem;\n    color: var(--ce-text-tertiary);\n    /* Highest shrink factor: the hint collapses before the loading\n       indicator starts truncating */\n    flex-shrink: 99;\n}\n\n.ce-toolbar-count {\n    flex-shrink: 0;\n    white-space: nowrap;\n    font-size: 0.875rem;\n    font-weight: 500;\n    font-variant-numeric: tabular-nums;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-select-list {\n    position: relative;\n    width: 100%;\n    flex: 1;\n    min-height: 120px;\n    padding: 12px 16px;\n    overflow-x: hidden;\n    overflow-y: auto;\n    border: 1px solid var(--ce-control-border);\n    border-radius: 0 0 4px 4px;\n    white-space: nowrap;\n}\n\n.ce-select-item {\n    display: flex;\n    align-items: center;\n    gap: 6px;\n    overflow: hidden;\n}\n\n.ce-select-item-empty {\n    color: var(--ce-text-tertiary);\n}\n\n.ce-select-item .ce-checkbox {\n    flex: 1;\n    min-width: 0;\n}\n\n.ce-select-item .ce-checkbox-label {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n}\n\n.ce-starred {\n    flex-shrink: 0;\n    color: #f59e0b;\n}\n\n.ce-select-item-meta {\n    flex-shrink: 0;\n    font-size: 0.7rem;\n    color: var(--ce-text-tertiary);\n    white-space: nowrap;\n    font-variant-numeric: tabular-nums;\n    min-width: 6.5rem;\n    text-align: right;\n}\n.ce-select-item-meta-active {\n    color: var(--ce-text-secondary);\n    font-weight: 600;\n}\n\n/* ── Sortable column header row ── */\n.ce-list-header {\n    display: flex;\n    align-items: center;\n    padding: 0 16px;\n    border: 1px solid var(--ce-control-border);\n    border-bottom: none;\n    background: var(--ce-list-header-surface);\n    user-select: none;\n    flex-shrink: 0;\n}\n\n.ce-list-header-cell {\n    flex-shrink: 0;\n    font-size: 0.68rem;\n    font-weight: 600;\n    color: var(--ce-text-tertiary);\n    letter-spacing: 0.03em;\n    text-transform: uppercase;\n    padding: 5px 4px;\n    white-space: nowrap;\n    min-width: 6.5rem;\n    text-align: right;\n}\n.ce-list-header-cell:hover {\n    color: var(--ce-text-primary);\n}\n.ce-list-header-cell-title {\n    flex: 1;\n    text-align: left;\n    padding-left: 28px; /* align with checkbox label */\n}\n.ce-list-header-cell-active {\n    color: var(--ce-accent);\n}\n\n.ce-load-more {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 8px;\n    margin: 8px 0 4px;\n}\n\n.ce-muted-count {\n    font-size: 0.75rem;\n    font-variant-numeric: tabular-nums;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-action-bar {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: 8px;\n    margin-top: 12px;\n}\n\n.ce-action-bar > .ce-select {\n    flex-shrink: 0;\n}\n\n/* The buttons wrap as one group, so Export never sits alone on its own row.\n   They only wrap among themselves when long labels overflow a full row. */\n.ce-action-buttons {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: flex-end;\n    flex-shrink: 0;\n    gap: 8px;\n    max-width: 100%;\n    margin-left: auto;\n}\n\n.ce-batch-note {\n    margin-top: 6px;\n    font-size: 0.75rem;\n    text-align: right;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-progress-header {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 8px;\n    margin: 8px 0 4px;\n}\n\n.ce-progress-name {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    font-size: 0.875rem;\n    color: var(--ce-text-secondary);\n}\n\n.ce-progress-count {\n    flex-shrink: 0;\n    font-size: 0.875rem;\n    font-variant-numeric: tabular-nums;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-progress {\n    width: 100%;\n    height: 10px;\n    margin-bottom: 16px;\n    border-radius: 9999px;\n    background-color: var(--ce-track);\n}\n\n.ce-progress-bar {\n    height: 100%;\n    border-radius: 9999px;\n    background-color: var(--ce-accent);\n}\n\n.ce-progress-bar-waiting {\n    background-color: #f59e0b;\n}\n\n@media (max-width: 480px) {\n    .ce-dialog { max-height: 90vh; }\n    .ce-list-header-cell:last-child { display: none; }\n    .ce-select-item-meta:last-child { display: none; }\n    .ce-action-bar > .ce-select { width: 100%; }\n}\n\n@keyframes ce-content-show {\n    from {\n        opacity: 0;\n        transform: translate(-50%, -48%) scale(0.96);\n    }\n    to {\n        opacity: 1;\n        transform: translate(-50%, -50%) scale(1);\n    }\n}\n");
+	_css("/* Native <dialog>: the backdrop replaces a separate overlay element. */\n.ce-dialog::backdrop {\n    background-color: rgba(0, 0, 0, 0.44);\n    animation: ce-fade-in 150ms cubic-bezier(0.16, 1, 0.3, 1);\n}\n\n.ce-dialog {\n    color: var(--ce-text-primary);\n    background-color: var(--ce-dialog-surface);\n    border-radius: 6px;\n    box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;\n    position: fixed;\n    /* The UA sheet sets inset: 0 and margin: auto on a modal <dialog>. */\n    inset: 50% auto auto 50%;\n    margin: 0;\n    border: 0;\n    transform: translate(-50%, -50%);\n    width: 90vw;\n    max-width: 560px;\n    max-height: 85vh;\n    overflow: hidden;\n    padding: 16px 24px;\n    outline: none;\n    animation: ce-content-show 150ms cubic-bezier(0.16, 1, 0.3, 1);\n    display: flex;\n    flex-direction: column;\n}\n\n/* display: flex above would otherwise show a closed <dialog>. */\n.ce-dialog:not([open]) {\n    display: none;\n}\n\n.ce-dialog-plain {\n    background-color: var(--ce-dialog-surface-plain);\n}\n\n:is(.dark, [data-theme=\"dark\"]) .ce-dialog {\n    border: 1px solid #40414f;\n}\n\n.ce-dialog-title {\n    margin: 0 0 16px 0;\n    font-weight: 500;\n    font-size: 20px;\n    line-height: 1.5;\n    flex-shrink: 0;\n}\n\n.ce-dialog-body {\n    flex: 1;\n    min-height: 0;\n    overflow-y: auto;\n    overflow-x: hidden;\n}\n\n.ce-dialog-footer {\n    display: flex;\n    flex-shrink: 0;\n    justify-content: flex-end;\n    padding-top: 16px;\n}\n\n.ce-button {\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 4px;\n    padding: 0 15px;\n    font-size: 15px;\n    line-height: 1;\n    height: 35px;\n}\n.ce-button-strong {\n    font-weight: 700;\n}\n.ce-button-green {\n    background-color: #ddf3e4;\n    color: #18794e;\n}\n.ce-button-green:hover {\n    background-color: #ccebd7;\n}\n.ce-button-red {\n    background-color: #f9d9d9;\n    color: #a71d2a;\n}\n.ce-button-neutral {\n    color: #6f6e77;\n    border: 1px solid #6f6e77;\n    font-size: 13px;\n    height: 26px;\n    padding: 0 8px;\n}\n.ce-button-neutral:hover {\n    background-color: rgba(111, 110, 119, 0.1);\n}\n:is(.dark, [data-theme=\"dark\"]) .ce-button-neutral {\n    color: #a0a0a8;\n    border-color: #a0a0a8;\n}\n:is(.dark, [data-theme=\"dark\"]) .ce-button-neutral:hover {\n    background-color: rgba(160, 160, 168, 0.1);\n}\n.ce-button:disabled,\n.ce-button:disabled:hover {\n    opacity: 0.5;\n    color: #6f6e77;\n    background-color: #e0e0e0;\n    cursor: not-allowed;\n}\n\n.ce-icon-button {\n    border-radius: 100%;\n    height: 25px;\n    width: 25px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    color: var(--ce-text-secondary);\n}\n.ce-icon-button:hover {\n    background-color: var(--ce-hover);\n}\n\n.ce-close-button {\n    position: absolute;\n    top: 10px;\n    right: 10px;\n}\n\n.ce-input {\n    width: 100%;\n    flex: 1;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    border-radius: 4px;\n    padding: 0 10px;\n    font-size: 15px;\n    line-height: 1;\n    color: var(--ce-text-primary);\n    background-color: var(--ce-input-surface);\n    box-shadow: 0 0 0 1px var(--ce-control-border);\n    height: 35px;\n    outline: none;\n}\n\n.ce-select {\n    appearance: none;\n    height: 2rem;\n    padding: 0 2rem 0 0.5rem;\n    width: auto;\n    min-width: 7.5rem;\n    border-radius: 4px;\n    color: var(--ce-text-primary);\n    background-color: var(--ce-input-surface);\n    /* Our own chevron, since appearance: none drops the native one. */\n    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238f8f8f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E\");\n    background-repeat: no-repeat;\n    background-position: right 0.5rem center;\n    background-size: 1rem;\n    box-shadow: 0 0 0 1px var(--ce-control-border);\n}\n\n.ce-select:disabled {\n    opacity: 0.6;\n    cursor: not-allowed;\n}\n\n/* ── Export dialog ── */\n\n.ce-export-source {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding-bottom: 12px;\n    margin-bottom: 12px;\n    border-bottom: 1px solid var(--ce-border);\n    color: var(--ce-text-secondary);\n}\n\n.ce-project-select {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    margin-bottom: 12px;\n    color: var(--ce-text-secondary);\n}\n\n.ce-select-search {\n    width: 100%;\n    padding: 8px 16px;\n    border: 1px solid var(--ce-control-border);\n    border-bottom: none;\n    border-radius: 4px 4px 0 0;\n    font-size: 14px;\n    outline: none;\n    flex-shrink: 0;\n}\n.ce-select-search::placeholder {\n    color: var(--ce-text-tertiary);\n}\n\n.ce-select-toolbar {\n    display: flex;\n    align-items: center;\n    /* Minimum breathing room between the select-all label and the right\n       group once the auto margin collapses under pressure */\n    gap: 12px;\n    padding: 12px 16px;\n    border: 1px solid var(--ce-control-border);\n    border-bottom: none;\n    flex-shrink: 0;\n}\n\n/* CJK labels wrap per-character when the row is squeezed — never shrink it */\n.ce-select-toolbar .ce-checkbox {\n    white-space: nowrap;\n    flex-shrink: 0;\n}\n\n.ce-select-toolbar-end {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n    margin-left: auto;\n    min-width: 0;\n}\n\n.ce-toolbar-loading {\n    display: flex;\n    align-items: center;\n    gap: 4px;\n    min-width: 0;\n    overflow: hidden;\n    white-space: nowrap;\n    font-size: 0.875rem;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-toolbar-status {\n    flex-shrink: 0;\n    height: auto;\n    font-size: 0.75rem;\n    padding: 2px 2rem 2px 0.5rem;\n    width: 8.5rem;\n    text-overflow: ellipsis;\n}\n\n.ce-toolbar-hint {\n    min-width: 0;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    font-size: 0.75rem;\n    color: var(--ce-text-tertiary);\n    /* Highest shrink factor: the hint collapses before the loading\n       indicator starts truncating */\n    flex-shrink: 99;\n}\n\n.ce-toolbar-count {\n    flex-shrink: 0;\n    white-space: nowrap;\n    font-size: 0.875rem;\n    font-weight: 500;\n    font-variant-numeric: tabular-nums;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-select-list {\n    position: relative;\n    width: 100%;\n    flex: 1;\n    min-height: 120px;\n    padding: 12px 16px;\n    overflow-x: hidden;\n    overflow-y: auto;\n    border: 1px solid var(--ce-control-border);\n    border-radius: 0 0 4px 4px;\n    white-space: nowrap;\n}\n\n.ce-select-item {\n    display: flex;\n    align-items: center;\n    gap: 6px;\n    overflow: hidden;\n}\n\n.ce-select-item-empty {\n    color: var(--ce-text-tertiary);\n}\n\n.ce-select-item .ce-checkbox {\n    flex: 1;\n    min-width: 0;\n}\n\n.ce-select-item .ce-checkbox-label {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n}\n\n.ce-starred {\n    flex-shrink: 0;\n    color: #f59e0b;\n}\n\n.ce-select-item-meta {\n    flex-shrink: 0;\n    font-size: 0.7rem;\n    color: var(--ce-text-tertiary);\n    white-space: nowrap;\n    font-variant-numeric: tabular-nums;\n    min-width: 6.5rem;\n    text-align: right;\n}\n.ce-select-item-meta-active {\n    color: var(--ce-text-secondary);\n    font-weight: 600;\n}\n\n/* ── Sortable column header row ── */\n.ce-list-header {\n    display: flex;\n    align-items: center;\n    padding: 0 16px;\n    border: 1px solid var(--ce-control-border);\n    border-bottom: none;\n    background: var(--ce-list-header-surface);\n    user-select: none;\n    flex-shrink: 0;\n}\n\n.ce-list-header-cell {\n    flex-shrink: 0;\n    font-size: 0.68rem;\n    font-weight: 600;\n    color: var(--ce-text-tertiary);\n    letter-spacing: 0.03em;\n    text-transform: uppercase;\n    padding: 5px 4px;\n    white-space: nowrap;\n    min-width: 6.5rem;\n    text-align: right;\n}\n.ce-list-header-cell:hover {\n    color: var(--ce-text-primary);\n}\n.ce-list-header-cell-title {\n    flex: 1;\n    text-align: left;\n    padding-left: 28px; /* align with checkbox label */\n}\n.ce-list-header-cell-active {\n    color: var(--ce-accent);\n}\n\n.ce-load-more {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 8px;\n    margin: 8px 0 4px;\n}\n\n.ce-muted-count {\n    font-size: 0.75rem;\n    font-variant-numeric: tabular-nums;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-action-bar {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: 8px;\n    margin-top: 12px;\n}\n\n.ce-action-bar > .ce-select {\n    flex-shrink: 0;\n}\n\n/* The buttons wrap as one group, so Export never sits alone on its own row.\n   They only wrap among themselves when long labels overflow a full row. */\n.ce-action-buttons {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: flex-end;\n    flex-shrink: 0;\n    gap: 8px;\n    max-width: 100%;\n    margin-left: auto;\n}\n\n.ce-batch-note {\n    margin-top: 6px;\n    font-size: 0.75rem;\n    text-align: right;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-folder-option {\n    margin-top: 10px;\n}\n\n.ce-folder-option-description {\n    margin-top: 2px;\n    font-size: 0.75rem;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-progress-header {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    gap: 8px;\n    margin: 8px 0 4px;\n}\n\n.ce-progress-name {\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    font-size: 0.875rem;\n    color: var(--ce-text-secondary);\n}\n\n.ce-progress-count {\n    flex-shrink: 0;\n    font-size: 0.875rem;\n    font-variant-numeric: tabular-nums;\n    color: var(--ce-text-tertiary);\n}\n\n.ce-progress {\n    width: 100%;\n    height: 10px;\n    margin-bottom: 16px;\n    border-radius: 9999px;\n    background-color: var(--ce-track);\n}\n\n.ce-progress-bar {\n    height: 100%;\n    border-radius: 9999px;\n    background-color: var(--ce-accent);\n}\n\n.ce-progress-bar-waiting {\n    background-color: #f59e0b;\n}\n\n@media (max-width: 480px) {\n    .ce-dialog { max-height: 90vh; }\n    .ce-list-header-cell:last-child { display: none; }\n    .ce-select-item-meta:last-child { display: none; }\n    .ce-action-bar > .ce-select { width: 100%; }\n}\n\n@keyframes ce-content-show {\n    from {\n        opacity: 0;\n        transform: translate(-50%, -48%) scale(0.96);\n    }\n    to {\n        opacity: 1;\n        transform: translate(-50%, -50%) scale(1);\n    }\n}\n");
 	function useCollapsedSidebar(container, isMobile) {
 		const [isCollapsed, setIsCollapsed] = h(false);
 		p(() => {
